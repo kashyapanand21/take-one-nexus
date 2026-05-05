@@ -3,19 +3,22 @@
   "builds": [
     {
       "src": "server.js",
-      "use": "@vercel/node"
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": [
+          "*.htm",
+          "*.css",
+          "*.js",
+          "routes/**",
+          "config/**",
+          "middleware/**",
+          "utils/**",
+          "database/**"
+        ]
+      }
     }
   ],
   "routes": [
-    {
-      "src": "/(api|routes|config|database|middleware|utils|docs|scripts)/.*",
-      "status": 403,
-      "dest": "/"
-    },
-    {
-      "src": "/(.*\\.(css|js|png|jpg|jpeg|svg|gif|ico|pdf))",
-      "dest": "/$1"
-    },
     {
       "src": "/(.*)",
       "dest": "server.js"
