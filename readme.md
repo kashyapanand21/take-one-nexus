@@ -34,10 +34,25 @@ Add the following environment variables in your Vercel Project Settings:
 
 This app is designed to be deployed on Vercel. Ensure all environment variables from `.env.example` are added to your Vercel project settings.
 
-### Required Environment Variables
-- `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`: Your MySQL database credentials.
-- `JWT_SECRET`: A secure string for session management.
-- `SMTP_*`: Credentials for sending system notifications.
+### Required Vercel Environment Variables
+
+To ensure the production system works, you **MUST** add these variables in your Vercel Project Settings:
+
+| Variable | Importance | Example / Description |
+| :--- | :--- | :--- |
+| `DB_HOST` | **CRITICAL** | Your MySQL host (e.g., `aws.connect.com`). Do NOT leave blank. |
+| `DB_PORT` | Required | Usually `3306`. |
+| `DB_NAME` | Required | Your database name (e.g., `take_one`). |
+| `DB_USER` | Required | Your database username. |
+| `DB_PASSWORD` | Required | Your database password. |
+| `JWT_SECRET` | **CRITICAL** | A long random string (e.g., `32+ characters`). |
+| `ALLOWED_ORIGINS`| Optional | Comma-separated list of extra CORS origins. |
+| `SMTP_HOST` | Required | SMTP server host for notifications. |
+| `SMTP_USER` | Required | SMTP username. |
+| `SMTP_PASS` | Required | SMTP app password. |
+
+> [!CAUTION]
+> If `DB_HOST` is missing, the app will attempt to connect to `127.0.0.1`, which will fail in the Vercel serverless environment with an `ECONNREFUSED` error.
 
 ---
 

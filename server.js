@@ -22,8 +22,18 @@ const allowedOrigins = [
   'http://localhost:3001',
   'http://127.0.0.1:3001',
   'http://localhost:5500',
-  'http://127.0.0.1:5500'
+  'http://127.0.0.1:5500',
+  'https://take-one-nexus.vercel.app'
 ];
+
+if (process.env.ALLOWED_ORIGINS) {
+  process.env.ALLOWED_ORIGINS.split(',').forEach(origin => {
+    const trimmed = origin.trim();
+    if (trimmed && !allowedOrigins.includes(trimmed)) {
+      allowedOrigins.push(trimmed);
+    }
+  });
+}
 
 app.use(cors({
   origin(origin, callback) {
@@ -66,7 +76,10 @@ app.get('/api/health', async (req, res) => {
     timestamp: new Date().toISOString(),
     env: {
       jwt_secret_set: Boolean(process.env.JWT_SECRET),
-      db_name: process.env.DB_NAME || 'take_one (default)'
+      db_host_set: Boolean(process.env.DB_HOST),
+      db_user_set: Boolean(process.env.DB_USER),
+      db_name: process.env.DB_NAME || 'take_one (default)',
+      node_env: process.env.NODE_ENV || 'development'
     },
     database: dbStatus
   });

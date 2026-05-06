@@ -13,13 +13,21 @@ const pool = mysql.createPool({
 });
 
 async function connectDB() {
+  const host = process.env.DB_HOST || 'localhost';
+  const name = process.env.DB_NAME || 'take_one';
+  
   try {
-    console.log(`Attempting to connect to database: ${process.env.DB_NAME || 'take_one'} at ${process.env.DB_HOST || 'localhost'}`);
+    if (!process.env.DB_HOST) {
+      console.warn('WARNING: DB_HOST is not set, defaulting to localhost. This may fail in production.');
+    }
+    
+    console.log(`Attempting to connect to database: ${name} at ${host}`);
     const connection = await pool.getConnection();
     console.log('MySQL connected successfully');
     connection.release();
   } catch (error) {
     console.error('MySQL connection failed!');
+    console.error('Target Host:', host);
     console.error('Error Code:', error.code);
     console.error('Error Message:', error.message);
     throw error;
