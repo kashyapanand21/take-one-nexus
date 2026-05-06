@@ -1,46 +1,35 @@
 {
   "version": 2,
-  "name": "take-one-nexus",
   "builds": [
     {
       "src": "server.js",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": [
-          "*.htm",
-          "*.css",
-          "*.js",
-          "routes/**",
-          "config/**",
-          "middleware/**",
-          "utils/**",
-          "database/**",
-          "styles/**",
-          "scripts/**",
-          "assets/**"
-        ]
-      }
+      "use": "@vercel/node"
+    },
+    {
+      "src": "package.json",
+      "use": "@vercel/next"
     }
   ],
   "routes": [
     {
+      "src": "/_next/(.*)",
+      "dest": "/_next/$1"
+    },
+    {
+      "src": "/admin(/(.*)|$)",
+      "dest": "/admin$1"
+    },
+    {
       "src": "/api/(.*)",
-      "dest": "server.js",
-      "headers": {
-        "Cache-Control": "no-store, max-age=0"
-      }
+      "dest": "server.js"
     },
     {
       "src": "/uploads/(.*)",
       "dest": "server.js"
     },
     {
-      "src": "/(.*)",
+      "src": "/((?!admin|api|_next).*)",
       "dest": "server.js"
     }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  }
+  ]
 }
-
