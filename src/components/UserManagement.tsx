@@ -59,7 +59,9 @@ export default function UserManagement({ initialUsers }: Props) {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-        <button className="btn-add" onClick={() => router.push('/admin/users/add')}>+ NEW CREW SIGNAL</button>
+        <button className="btn-add" onClick={() => router.push('/admin/users/add')}>
+          <span>+ NEW CREW SIGNAL</span>
+        </button>
       </div>
 
       <div className="admin-table-container">
@@ -79,15 +81,15 @@ export default function UserManagement({ initialUsers }: Props) {
             {filteredUsers.length > 0 ? (
               filteredUsers.map(user => (
                 <tr key={user.id}>
-                  <td style={{ fontWeight: 'bold' }}>{user.name}</td>
-                  <td style={{ color: 'var(--silver)' }}>{user.email}</td>
-                  <td>
+                  <td data-label="CREW NAME" style={{ fontWeight: 'bold' }}>{user.name}</td>
+                  <td data-label="CHANNEL / EMAIL" style={{ color: 'var(--silver)' }}>{user.email}</td>
+                  <td data-label="DESIGNATION">
                     <span className="role-badge">{user.role || 'GHOST'}</span>
                   </td>
-                  <td style={{ color: 'var(--silver)' }}>{user.college || '—'}</td>
-                  <td style={{ color: 'var(--silver)' }}>{user.city || '—'}</td>
-                  <td style={{ color: 'var(--silver)', fontSize: '10px' }}>{new Date(user.created_at).toLocaleDateString()}</td>
-                  <td>
+                  <td data-label="BASE / COLLEGE" style={{ color: 'var(--silver)' }}>{user.college || '—'}</td>
+                  <td data-label="LOCATION" style={{ color: 'var(--silver)' }}>{user.city || '—'}</td>
+                  <td data-label="SYNC DATE" style={{ color: 'var(--silver)', fontSize: '10px' }}>{new Date(user.created_at).toLocaleDateString()}</td>
+                  <td data-label="OPERATIONS">
                     <button 
                       className="btn-action btn-delete" 
                       onClick={() => handleDelete(user.id)}

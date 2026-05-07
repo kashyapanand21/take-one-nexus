@@ -1516,3 +1516,86 @@ function uploadScript() {
     uploadBtn.textContent = originalText;
   });
 }
+
+/* ── LOCATION AUTOCOMPLETE ── */
+function initLocationAutocomplete() {
+  const cityInput = document.getElementById('registerCity');
+  const suggestionsBox = document.getElementById('citySuggestions');
+  if (!cityInput || !suggestionsBox) return;
+
+  let selectedIndex = -1;
+
+  cityInput.addEventListener('input', () => {
+    const query = cityInput.value.toLowerCase().trim();
+    if (!query) {
+      suggestionsBox.innerHTML = '';
+      suggestionsBox.classList.remove('active');
+      return;
+    }
+
+    const matches = (window.INDIAN_CITIES || []).filter(city => 
+      city.toLowerCase().includes(query)
+    ).slice(0, 10);
+
+    if (matches.length > 0) {
+      suggestionsBox.innerHTML = matches.map((city, index) => `
+        <div class="suggestion-item" data-index="${index}">${city}</div>
+      `).join('');
+      suggestionsBox.classList.add('active');
+    } else {
+      suggestionsBox.innerHTML = '';
+      suggestionsBox.classList.remove('active');
+    }
+    selectedIndex = -1;
+  });
+
+  cityInput.addEventListener('keydown', (e) => {
+    const items = suggestionsBox.querySelectorAll('.suggestion-item');
+    if (!items.length) return;
+
+    if (e.key === 'ArrowDown') {
+      selectedIndex = (selectedIndex + 1) % items.length;
+      updateSelection(items);
+      e.preventDefault();
+    } else if (e.key === 'ArrowUp') {
+      selectedIndex = (selectedIndex - 1 + items.length) % items.length;
+      updateSelection(items);
+      e.preventDefault();
+    } else if (e.key === 'Enter' && selectedIndex > -1) {
+      selectCity(items[selectedIndex].textContent);
+      e.preventDefault();
+    }
+  });
+
+  function updateSelection(items) {
+    items.forEach((item, i) => {
+      item.classList.toggle('selected', i === selectedIndex);
+    });
+  }
+
+  function selectCity(city) {
+    cityInput.value = city;
+    suggestionsBox.innerHTML = '';
+    suggestionsBox.classList.remove('active');
+  }
+
+  suggestionsBox.addEventListener('click', (e) => {
+    const item = e.target.closest('.suggestion-item');
+    if (item) {
+      selectCity(item.textContent);
+    }
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!cityInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
+      suggestionsBox.classList.remove('active');
+    }
+  });
+}
+
+// Initialize on load
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initLocationAutocomplete);
+} else {
+  initLocationAutocomplete();
+}

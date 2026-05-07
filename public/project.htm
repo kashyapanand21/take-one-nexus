@@ -643,9 +643,10 @@
         <label for="registerCollege">College / University</label>
         <input type="text" id="registerCollege" placeholder="e.g., FTII Pune">
       </div>
-      <div class="form-group">
+      <div class="form-group" style="position: relative;">
         <label for="registerCity">City</label>
-        <input type="text" id="registerCity" placeholder="e.g., Mumbai">
+        <input type="text" id="registerCity" placeholder="e.g., Mumbai" autocomplete="off">
+        <div id="citySuggestions" class="autocomplete-dropdown"></div>
       </div>
       <button type="submit" class="form-submit">Create Account →</button>
     </form>
@@ -692,6 +693,7 @@
 
     <script src="/scripts/api/api.js"></script>
     <script src="/scripts/utils/helpers.js"></script>
+    <script src="/scripts/utils/locations.js"></script>
     <script src="/scripts/components/ui.js"></script>
     <script src="/scripts/animations/common.js"></script>
     <script src="/scripts/pages/project.js"></script>
