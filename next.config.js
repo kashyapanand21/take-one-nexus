@@ -1,8 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // We can add rewrites if we want to point to the Express server during migration
-  // but for now let's stick to pure Next.js for the admin panel.
+  images: {
+    remotePatterns: [
+      { protocol: 'https', hostname: 'api.dicebear.com' },
+      { protocol: 'https', hostname: 'ui-avatars.com' },
+    ],
+  },
 };
 
 module.exports = nextConfig;

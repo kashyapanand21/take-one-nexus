@@ -5,16 +5,40 @@ import Pusher from 'pusher-js';
 import { getAvatarUrl } from '@/lib/avatars';
 import './chat.css';
 
+interface User {
+  id: number;
+  name: string;
+  avatar_url?: string;
+  gender?: string;
+  role?: string;
+}
+
+interface ChatMessage {
+  id: number;
+  conversation_id: number;
+  sender_id: number;
+  content: string;
+  created_at: string;
+  sender: User;
+}
+
+interface Conversation {
+  id: number | null;
+  recipientId?: number;
+  users: User[];
+  messages: ChatMessage[];
+}
+
 export default function ChatPage() {
-  const [conversations, setConversations] = useState([]);
-  const [activeConv, setActiveConv] = useState(null);
-  const [messages, setMessages] = useState([]);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [activeConv, setActiveConv] = useState<Conversation | null>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   
-  const messagesEndRef = useRef(null);
-  const pusherRef = useRef(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const pusherRef = useRef<Pusher | null>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -49,7 +73,7 @@ export default function ChatPage() {
     scrollToBottom();
   }, [messages]);
 
-  const fetchConversations = async (targetUserId = null) => {
+  const fetchConversations = async (targetUserId: string | null = null) => {
     try {
       const res = await fetch('/api/chat/conversations');
       const json = await res.json();
@@ -57,7 +81,7 @@ export default function ChatPage() {
         setConversations(json.data);
         
         if (targetUserId) {
-          const existing = json.data.find(c => c.users.some(u => u.id === Number(targetUserId)));
+          const existing = json.data.find((c: Conversation) => c.users.some((u: User) => u.id === Number(targetUserId)));
           if (existing) {
             setActiveConv(existing);
           } else {
@@ -66,12 +90,14 @@ export default function ChatPage() {
             const userJson = await userRes.json();
             if (userJson.success) {
                // Temporary mock conversation object until first message is sent
-               setActiveConv({
-                 id: null,
-                 recipientId: Number(targetUserId),
-                 users: [user, userJson.data],
-                 messages: []
-               });
+               if (user) {
+                 setActiveConv({
+                   id: null,
+                   recipientId: Number(targetUserId),
+                   users: [user, userJson.data],
+                   messages: []
+                 });
+               }
             }
           }
         }
@@ -83,7 +109,8 @@ export default function ChatPage() {
     }
   };
 
-  const fetchMessages = async (convId) => {
+  const fetchMessages = async (convId: number | null) => {
+    if (!convId) return;
     try {
       const res = await fetch(`/api/chat/messages/${convId}`);
       const json = await res.json();
@@ -95,20 +122,21 @@ export default function ChatPage() {
     }
   };
 
-  const subscribeToConversation = (convId) => {
+  const subscribeToConversation = (convId: number | null) => {
+    if (!convId) return;
     if (!pusherRef.current) {
       const pusherKey = process.env.NEXT_PUBLIC_PUSHER_KEY;
       const pusherCluster = process.env.NEXT_PUBLIC_PUSHER_CLUSTER;
       
-      if (!pusherKey) return;
+      if (!pusherKey || !pusherCluster) return;
       
       pusherRef.current = new Pusher(pusherKey, {
-        cluster: pusherCluster
+        cluster: pusherCluster as string
       });
     }
 
     const channel = pusherRef.current.subscribe(`conversation-${convId}`);
-    channel.bind('new-message', (data) => {
+    channel.bind('new-message', (data: { message: ChatMessage }) => {
       setMessages((prev) => {
         // Prevent duplicate messages
         if (prev.find(m => m.id === data.message.id)) return prev;
@@ -117,13 +145,13 @@ export default function ChatPage() {
     });
   };
 
-  const unsubscribeFromConversation = (convId) => {
-    if (pusherRef.current) {
+  const unsubscribeFromConversation = (convId: number | null) => {
+    if (convId && pusherRef.current) {
       pusherRef.current.unsubscribe(`conversation-${convId}`);
     }
   };
 
-  const sendMessage = async (e) => {
+  const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim() || !activeConv) return;
 
@@ -145,7 +173,7 @@ export default function ChatPage() {
       if (json.success) {
         if (!activeConv.id) {
           // If it was a new conversation, we now have an ID
-          const updatedConv = { ...activeConv, id: json.data.conversation_id };
+          const updatedConv: Conversation = { ...activeConv, id: json.data.conversation_id };
           setActiveConv(updatedConv);
           fetchConversations(); // Refresh list to show the new conversation
         }
@@ -164,7 +192,7 @@ export default function ChatPage() {
 
   if (loading) return <div className="chat-loading">Synchronizing with Nexus...</div>;
 
-  const getRecipient = (conv) => {
+  const getRecipient = (conv: Conversation) => {
     return conv.users.find(u => u.id !== user?.id);
   };
 
@@ -194,7 +222,7 @@ export default function ChatPage() {
                   onClick={() => setActiveConv(conv)}
                 >
                   <img 
-                    src={getAvatarUrl(recipient?.name, recipient?.gender, recipient?.avatar_url)} 
+                    src={getAvatarUrl(recipient?.name || 'User', recipient?.gender || 'Other', recipient?.avatar_url)} 
                     alt="" 
                     className="conv-avatar" 
                   />

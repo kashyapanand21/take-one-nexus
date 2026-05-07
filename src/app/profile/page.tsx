@@ -107,7 +107,11 @@ export default async function ProfilePage() {
               <div className="avatar-ring">
                 <img src={avatarUrl}
                      id="profilePic" alt="Profile Photo" 
-                     onError="this.onerror=null; this.src='https://ui-avatars.com/api/?name=' + encodeURIComponent('User') + '&background=random';" />
+                     onError={(e) => {
+                       const target = e.target as HTMLImageElement;
+                       target.onerror = null;
+                       target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent('User')}&background=random`;
+                     }} />
               </div>
               <button className="avatar-edit" id="avatarEditBtn" type="button">✎</button>
               <input type="file" id="avatarInput" accept="image/*" style={{ display: 'none' }} />
