@@ -45,12 +45,22 @@ export async function generateMetadata(
 
 export default async function ProfilePage() {
   let user = null;
+  let errorState = null;
+
   try {
     user = await getCurrentUser();
-  } catch (error) {
+  } catch (error: any) {
     console.error('[Profile Fetch Error]:', error);
-    // Return a specific error component or throw for the Error Boundary
-    throw new Error('Database connection failed');
+    if (error.message === 'DATABASE_CONNECTION_FAILURE') {
+      errorState = 'DB_ERROR';
+    } else {
+      throw error; // Rethrow other errors to the boundary
+    }
+  }
+
+  // If DB failed, throw for the Error Boundary to show cinematic error
+  if (errorState === 'DB_ERROR') {
+    throw new Error('PRODUCTION_DATABASE_OFFLINE');
   }
 
   if (!user) {
@@ -110,32 +120,32 @@ export default async function ProfilePage() {
                      onError={(e) => {
                        const target = e.target as HTMLImageElement;
                        target.onerror = null;
-                       target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent('User')}&background=random`;
+                       target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=random`;
                      }} />
               </div>
               <button className="avatar-edit" id="avatarEditBtn" type="button">✎</button>
               <input type="file" id="avatarInput" accept="image/*" style={{ display: 'none' }} />
             </div>
 
-            <div id="profileName">{user.name}</div>
-            <div className="profile-role" id="profileRole">{user.role || 'Independent Filmmaker'}</div>
-            <div className="profile-meta" id="profileMeta">{user.college || 'College'} · {user.city || 'City'}</div>
+            <div id="profileName">{user?.name || 'Creator'}</div>
+            <div className="profile-role" id="profileRole">{user?.role || 'Independent Filmmaker'}</div>
+            <div className="profile-meta" id="profileMeta">{user?.college || 'College'} · {user?.city || 'City'}</div>
 
             <p className="profile-bio" id="profileBio">
-              {user.bio || 'No bio provided yet.'}
+              {user?.bio || 'No bio provided yet.'}
             </p>
 
             <div className="profile-stats">
               <div className="pstat">
-                <div className="pstat-num" id="projCount">{user.scripts?.length || 0}</div>
+                <div className="pstat-num" id="projCount">{user?.scripts?.length || 0}</div>
                 <div className="pstat-label">Scripts</div>
               </div>
               <div className="pstat">
-                <div className="pstat-num" id="skillsCount">{user.skills ? String(user.skills).split(',').length : 0}</div>
+                <div className="pstat-num" id="skillsCount">{user?.skills ? String(user.skills).split(',').length : 0}</div>
                 <div className="pstat-label">Skills</div>
               </div>
               <div className="pstat">
-                <div className="pstat-num pstat-text" id="profileCity">{user.city || '--'}</div>
+                <div className="pstat-num pstat-text" id="profileCity">{user?.city || '--'}</div>
                 <div className="pstat-label">City</div>
               </div>
             </div>
@@ -199,11 +209,11 @@ export default async function ProfilePage() {
               <div className="about-grid">
                 <div className="about-item">
                   <label htmlFor="editName">Display Name</label>
-                  <input type="text" id="editName" defaultValue={user.name} placeholder="Your name…" />
+                  <input type="text" id="editName" defaultValue={user?.name || ''} placeholder="Your name…" />
                 </div>
                 <div className="about-item">
                   <label htmlFor="editRole">Primary Role</label>
-                  <select id="editRole" className="profile-role-dropdown" defaultValue={user.role || ''}>
+                  <select id="editRole" className="profile-role-dropdown" defaultValue={user?.role || ''}>
                     {USER_ROLES.map(role => (
                       <option key={role} value={role}>{role}</option>
                     ))}
@@ -211,15 +221,15 @@ export default async function ProfilePage() {
                 </div>
                 <div className="about-item">
                   <label htmlFor="editCollege">College</label>
-                  <input type="text" id="editCollege" defaultValue={user.college || ''} placeholder="FTII, Pune…" />
+                  <input type="text" id="editCollege" defaultValue={user?.college || ''} placeholder="FTII, Pune…" />
                 </div>
                 <div className="about-item">
                   <label htmlFor="editCity">City</label>
-                  <input type="text" id="editCity" defaultValue={user.city || ''} placeholder="Mumbai…" />
+                  <input type="text" id="editCity" defaultValue={user?.city || ''} placeholder="Mumbai…" />
                 </div>
                 <div className="about-item">
                   <label htmlFor="editGender">Gender</label>
-                  <select id="editGender" defaultValue={user.gender || 'Prefer not to say'}>
+                  <select id="editGender" defaultValue={user?.gender || 'Prefer not to say'}>
                     <option value="Male">Male</option>
                     <option value="Female">Female</option>
                     <option value="Other">Other</option>
@@ -228,15 +238,15 @@ export default async function ProfilePage() {
                 </div>
                 <div className="about-item full">
                   <label htmlFor="editPortfolio">Portfolio / Reel</label>
-                  <input type="text" id="editPortfolio" defaultValue={user.portfolio || ''} placeholder="https://…" />
+                  <input type="text" id="editPortfolio" defaultValue={user?.portfolio || ''} placeholder="https://…" />
                 </div>
                 <div className="about-item full">
                   <label htmlFor="editBio">Bio</label>
-                  <textarea id="editBio" defaultValue={user.bio || ''} placeholder="Tell the world about your filmmaking journey…"></textarea>
+                  <textarea id="editBio" defaultValue={user?.bio || ''} placeholder="Tell the world about your filmmaking journey…"></textarea>
                 </div>
                 <div className="about-item full">
                   <label htmlFor="editSkills">Skills (comma separated)</label>
-                  <input type="text" id="editSkills" defaultValue={user.skills || ''} placeholder="Direction, Screenplay, Color Grading, VFX… " />
+                  <input type="text" id="editSkills" defaultValue={user?.skills || ''} placeholder="Direction, Screenplay, Color Grading, VFX… " />
                 </div>
               </div>
               <button className="save-btn" id="saveProfileBtn">Save Changes →</button>

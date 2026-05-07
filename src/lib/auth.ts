@@ -26,8 +26,14 @@ export async function getCurrentUser() {
     });
 
     return user;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Auth verification failed:', error);
+    
+    // If it's a Prisma connection error, throw it so the Error Boundary can catch it
+    if (error?.code?.startsWith('P') || error?.message?.includes('connection') || error?.message?.includes('Database')) {
+      throw new Error('DATABASE_CONNECTION_FAILURE');
+    }
+    
     return null;
   }
 }
