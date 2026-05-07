@@ -181,9 +181,6 @@ async function loadProfile() {
     }
 }
 
-document.getElementById('profileLogoutBtn')?.addEventListener('click', () => {
-    API.auth.logout();
-});
 
 function requestCard(request, mode) {
     const otherName = mode === 'incoming'

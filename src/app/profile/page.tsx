@@ -13,18 +13,29 @@ export async function generateMetadata(
   { params, searchParams }: Props,
   parent: ResolvingMetadata
 ): Promise<Metadata> {
-  const user = await getCurrentUser();
-  
-  if (!user) {
+  try {
+    // Await params and searchParams for Next.js 15+ compatibility
+    await params;
+    await searchParams;
+    
+    const user = await getCurrentUser();
+    
+    if (!user) {
+      return {
+        title: 'Profile — TAKE ONE',
+      };
+    }
+
+    return {
+      title: `${user.name} — TAKE ONE`,
+      description: user.bio || `Creator profile of ${user.name} on TAKE ONE.`,
+    };
+  } catch (error) {
+    console.error('[Metadata Error]:', error);
     return {
       title: 'Profile — TAKE ONE',
     };
   }
-
-  return {
-    title: `${user.name} — TAKE ONE`,
-    description: user.bio || `Creator profile of ${user.name} on TAKE ONE.`,
-  };
 }
 
 export default async function ProfilePage() {
@@ -82,8 +93,7 @@ export default async function ProfilePage() {
                 <img src={user.avatar_url || "https://via.placeholder.com/150/0E1218/FF4D1A?text=C"}
                      id="profilePic" alt="Profile Photo" />
               </div>
-              <button className="avatar-edit"
-                      onClick={() => { if(typeof window !== 'undefined') (document.getElementById('avatarInput') as HTMLInputElement).click() }}>✎</button>
+              <button className="avatar-edit" id="avatarEditBtn" type="button">✎</button>
               <input type="file" id="avatarInput" accept="image/*" style={{ display: 'none' }} />
             </div>
 
@@ -97,11 +107,11 @@ export default async function ProfilePage() {
 
             <div className="profile-stats">
               <div className="pstat">
-                <div className="pstat-num" id="projCount">{user.scripts.length}</div>
+                <div className="pstat-num" id="projCount">{user.scripts?.length || 0}</div>
                 <div className="pstat-label">Scripts</div>
               </div>
               <div className="pstat">
-                <div className="pstat-num" id="skillsCount">{user.skills ? user.skills.split(',').length : 0}</div>
+                <div className="pstat-num" id="skillsCount">{user.skills ? String(user.skills).split(',').length : 0}</div>
                 <div className="pstat-label">Skills</div>
               </div>
               <div className="pstat">
@@ -115,7 +125,7 @@ export default async function ProfilePage() {
             </button>
 
             <div className="skill-badges" id="skillBadges">
-              {user.skills && user.skills.split(',').map((skill, i) => (
+              {user.skills && String(user.skills).split(',').map((skill, i) => (
                 <span key={i} className="badge">{skill.trim()}</span>
               ))}
             </div>
@@ -139,12 +149,12 @@ export default async function ProfilePage() {
                 <a href="/#upload" className="btn-sm">+ Add Script</a>
               </div>
               <div className="project-grid" id="projectGrid">
-                {user.scripts.map((script, i) => (
+                {(user.scripts || []).map((script, i) => (
                   <div key={script.id} className="project-card"
                        style={{ background: `linear-gradient(160deg, #1a1108 0%, #06080A 100%)` }}>
                     <div className="pc-num">{String(i + 1).padStart(3, '0')}</div>
-                    <div className="pc-genre">{script.genre}</div>
-                    <div className="pc-title">{script.title}</div>
+                    <div className="pc-genre">{script.genre || 'General'}</div>
+                    <div className="pc-title">{script.title || 'Untitled Script'}</div>
                   </div>
                 ))}
                 
@@ -173,7 +183,7 @@ export default async function ProfilePage() {
                 </div>
                 <div className="about-item">
                   <label htmlFor="editRole">Primary Role</label>
-                  <select id="editRole" className="profile-role-dropdown" style={{
+                  <select id="editRole" className="profile-role-dropdown" defaultValue={user.role || ''} style={{
                     width: '100%',
                     background: 'var(--machine)',
                     border: '1px solid var(--rail)',
@@ -183,7 +193,7 @@ export default async function ProfilePage() {
                     fontSize: '12px'
                   }}>
                     {USER_ROLES.map(role => (
-                      <option key={role} value={role} selected={user.role === role}>{role}</option>
+                      <option key={role} value={role}>{role}</option>
                     ))}
                   </select>
                 </div>
