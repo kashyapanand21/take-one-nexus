@@ -3,6 +3,7 @@ import { Metadata, ResolvingMetadata } from 'next';
 import { getCurrentUser } from '@/lib/auth';
 import { USER_ROLES } from '@/lib/constants';
 import Script from 'next/script';
+import './profile.css';
 
 type Props = {
   params: Promise<{ id: string }>
@@ -66,7 +67,7 @@ export default async function ProfilePage() {
       {/* ── HEADER ── */}
       <header>
         <a href="/" className="logo">TAKE <span>ONE</span></a>
-        <nav style={{ display: 'flex', gap: '28px' }}>
+        <nav>
           <a href="/">Home</a>
           <a href="/#explore">Explore</a>
           <a href="/#upload">Upload</a>
@@ -91,7 +92,8 @@ export default async function ProfilePage() {
             <div className="avatar-wrap">
               <div className="avatar-ring">
                 <img src={user.avatar_url || "https://via.placeholder.com/150/0E1218/FF4D1A?text=C"}
-                     id="profilePic" alt="Profile Photo" />
+                     id="profilePic" alt="Profile Photo"
+                     onError={(e) => { (e.target as HTMLImageElement).src = "https://via.placeholder.com/150/0E1218/FF4D1A?text=C"; }} />
               </div>
               <button className="avatar-edit" id="avatarEditBtn" type="button">✎</button>
               <input type="file" id="avatarInput" accept="image/*" style={{ display: 'none' }} />
@@ -183,15 +185,7 @@ export default async function ProfilePage() {
                 </div>
                 <div className="about-item">
                   <label htmlFor="editRole">Primary Role</label>
-                  <select id="editRole" className="profile-role-dropdown" defaultValue={user.role || ''} style={{
-                    width: '100%',
-                    background: 'var(--machine)',
-                    border: '1px solid var(--rail)',
-                    color: 'var(--cream)',
-                    padding: '12px',
-                    fontFamily: 'var(--font-main)',
-                    fontSize: '12px'
-                  }}>
+                  <select id="editRole" className="profile-role-dropdown" defaultValue={user.role || ''}>
                     {USER_ROLES.map(role => (
                       <option key={role} value={role}>{role}</option>
                     ))}
@@ -272,18 +266,6 @@ export default async function ProfilePage() {
         <div className="status-item">TAKE ONE · Creator Mode</div>
         <div className="status-item" id="statusTime"></div>
       </div>
-
-      <style dangerouslySetInnerHTML={{ __html: `
-        .profile-role-dropdown:focus {
-          outline: none;
-          border-color: var(--neon);
-          box-shadow: 0 0 10px rgba(255, 77, 26, 0.2);
-        }
-        .profile-role-dropdown option {
-          background: var(--void);
-          color: var(--cream);
-        }
-      `}} />
 
       <Script src="/scripts/api/api.js" strategy="beforeInteractive" />
       <Script src="/scripts/utils/helpers.js" strategy="beforeInteractive" />
