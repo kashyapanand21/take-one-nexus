@@ -2,6 +2,7 @@ require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const path = require('path');
 const { connectDB } = require('./config/db');
 const homeRoutes = require('./routes/home');
@@ -50,6 +51,7 @@ app.use(cors({
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 app.use('/uploads', express.static(path.join(__dirname, 'public', 'assets', 'uploads')));
 app.use(express.static(path.join(__dirname, 'public')));

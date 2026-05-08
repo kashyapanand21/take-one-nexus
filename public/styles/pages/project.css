@@ -2312,9 +2312,37 @@ footer {
   background: none;
   border: none;
   color: var(--silver);
-  font-size: 28px;
-  cursor: pointer;
-  transition: all 0.3s;
+  font-size: 24px;
+  cursor: none;
+  transition: color 0.3s;
+}
+
+.form-error {
+  background: rgba(255, 77, 26, 0.1);
+  border: 1px solid var(--neon);
+  color: var(--neon);
+  padding: 12px;
+  font-size: 10px;
+  margin-bottom: 20px;
+  text-align: center;
+  letter-spacing: 0.1em;
+  animation: shake 0.4s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+.form-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: var(--border);
+  box-shadow: none;
+}
+
+.modal-close {
   width: 32px;
   height: 32px;
   display: flex;

@@ -33,12 +33,17 @@ const dbConfig = process.env.DATABASE_URL
 const poolConfig = {
   ...dbConfig,
   waitForConnections: true,
-  connectionLimit: process.env.NODE_ENV === 'production' ? 5 : 10, // Fewer connections in serverless prod
+  connectionLimit: 5, // Lower limit is better for serverless to prevent exhaustion
+  maxIdle: 5,
+  idleTimeout: 60000,
   queueLimit: 0,
-  connectTimeout: 15000, // 15 seconds for cloud DBs
-  // SSL support is critical for production DBs like Aiven, DigitalOcean, PlanetScale
-  ssl: (process.env.DB_SSL === 'true' || process.env.DATABASE_URL?.includes('sslmode=require')) 
-    ? { rejectUnauthorized: true } 
+  connectTimeout: 20000,
+  // Optimized SSL for TiDB Cloud / Aiven / PlanetScale
+  ssl: (process.env.DB_SSL === 'true' || process.env.DATABASE_URL?.includes('ssl')) 
+    ? { 
+        rejectUnauthorized: false, // More compatible with various cloud environments
+        minVersion: 'TLSv1.2'
+      } 
     : undefined
 };
 

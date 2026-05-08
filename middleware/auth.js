@@ -1,10 +1,18 @@
 const jwt = require('jsonwebtoken');
 
 function authenticateUser(req, res, next) {
+  let token = null;
+
+  // 1. Check Authorization Header
   const authHeader = req.headers.authorization || '';
-  const token = authHeader.startsWith('Bearer ')
-    ? authHeader.slice(7)
-    : null;
+  if (authHeader.startsWith('Bearer ')) {
+    token = authHeader.slice(7);
+  }
+
+  // 2. Check Cookie (Critical for Next.js SSR and Vercel production)
+  if (!token && req.cookies) {
+    token = req.cookies.token;
+  }
 
   if (!token) {
     return res.status(401).json({

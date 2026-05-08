@@ -993,9 +993,13 @@ loginForm?.addEventListener('submit', async (e) => {
   const submitBtn = loginForm.querySelector('.form-submit');
   const originalText = submitBtn.textContent;
   
+  // Clear previous errors
+  const existingError = loginForm.querySelector('.form-error');
+  if (existingError) existingError.remove();
+
   try {
     submitBtn.disabled = true;
-    submitBtn.textContent = 'Signing in...';
+    submitBtn.textContent = 'Authenticating Signal...';
     
     const response = await API.users.login(email, password);
     
@@ -1007,7 +1011,12 @@ loginForm?.addEventListener('submit', async (e) => {
       updateUIAfterLogin(response.user);
     }
   } catch (err) {
-    showToast(`❌ ${err.message || 'Login failed. Check your email and password.'}`);
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'form-error';
+    errorDiv.textContent = err.message || 'Login failed. Check your email and password.';
+    loginForm.prepend(errorDiv);
+    
+    showToast(`❌ Login Failed`);
   } finally {
     submitBtn.disabled = false;
     submitBtn.textContent = originalText;
@@ -1036,27 +1045,42 @@ registerForm?.addEventListener('submit', async (e) => {
     showToast('❌ Password must be at least 6 characters');
     return;
   }
-  
   const submitBtn = registerForm.querySelector('.form-submit');
   const originalText = submitBtn.textContent;
   
+  // Clear previous errors
+  const existingError = registerForm.querySelector('.form-error');
+  if (existingError) existingError.remove();
+
+  if (password !== confirmPassword) {
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'form-error';
+    errorDiv.textContent = 'Passwords do not match ✦';
+    registerForm.prepend(errorDiv);
+    return;
+  }
+
   try {
     submitBtn.disabled = true;
-    submitBtn.textContent = 'Creating account...';
+    submitBtn.textContent = 'Generating Crew Card...';
     
-    const response = await API.users.register({
-      name, email, password, role, college, city, gender
-    });
+    const payload = { name, email, password, role, gender, college, city };
+    const response = await API.users.register(payload);
     
     if (response.success) {
-      API.auth.saveToken(response.token, { id: response.user_id, name, role });
-      showToast(`Welcome to TAKE ONE, ${name}! ✦`);
+      API.auth.saveToken(response.token, response.user);
+      showToast(`Welcome to the set, ${response.user.name}! ✦`);
       closeModal(registerModal);
       registerForm.reset();
-      updateUIAfterLogin({ id: response.user_id, name, role });
+      updateUIAfterLogin(response.user);
     }
   } catch (err) {
-    showToast(`❌ ${err.message || 'Registration failed.'}`);
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'form-error';
+    errorDiv.textContent = err.message || 'Registration failed. Please try again.';
+    registerForm.prepend(errorDiv);
+    
+    showToast(`❌ Registration Failed`);
   } finally {
     submitBtn.disabled = false;
     submitBtn.textContent = originalText;
