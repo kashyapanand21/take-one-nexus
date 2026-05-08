@@ -286,7 +286,6 @@ router.get('/user/:id', authenticateUser, requireSameUser, async (req, res) => {
         scripts.genre AS script_genre,
         users.name AS requester_name,
         users.role AS requester_role,
-        users.email AS requester_email,
         users.city AS requester_city,
         users.gender AS requester_gender,
         users.avatar_url AS requester_avatar_url
@@ -307,7 +306,6 @@ router.get('/user/:id', authenticateUser, requireSameUser, async (req, res) => {
         scripts.title AS script_title,
         scripts.genre AS script_genre,
         users.name AS owner_name,
-        users.email AS owner_email,
         users.gender AS owner_gender,
         users.avatar_url AS owner_avatar_url
        FROM collaboration_requests

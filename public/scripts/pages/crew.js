@@ -55,8 +55,7 @@ function personCard(person) {
       <div class="crew-bio">${person.bio || 'Profile is live. Reach out and start a collaboration conversation.'}</div>
       <div class="crew-skills">${skills}</div>
       <div class="crew-actions">
-        <a class="crew-contact" href="mailto:${person.email}?subject=TAKE%20ONE%20Collaboration">Contact</a>
-        <div class="crew-email">${person.email || ''}</div>
+        <a class="crew-contact" href="/chat?user=${person.id}">Message</a>
       </div>
     </article>
   `;

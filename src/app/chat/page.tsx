@@ -228,10 +228,16 @@ export default function ChatPage() {
 
   return (
     <div className="chat-page">
-      <header className="chat-app-header">
+      <header>
         <a href="/" className="logo">TAKE <span>ONE</span></a>
         <nav>
-          <a href="/profile">Back to Profile</a>
+          <a href="/#explore">Explore</a>
+          <a href="/crew">Crew</a>
+          <a href="/#upload">Upload</a>
+          <a href="/profile">Profile</a>
+          <button onClick={() => window.location.href='/profile'} className="nav-cta" style={{ border: 'none', cursor: 'pointer', fontFamily: "'Bebas Neue', sans-serif" }}>
+            My Signal
+          </button>
         </nav>
       </header>
 
@@ -275,8 +281,14 @@ export default function ChatPage() {
             <>
               <header className="chat-header">
                 <div className="header-info">
-                  <h3>{getRecipient(activeConv)?.name}</h3>
-                  <span>{getRecipient(activeConv)?.role || 'Crew'}</span>
+                  <div className="header-name-row">
+                    <h3>{getRecipient(activeConv)?.name}</h3>
+                    <div className="status-indicator">
+                       <span className="status-dot online"></span>
+                       <span>Signal Live</span>
+                    </div>
+                  </div>
+                  <span className="header-role">{getRecipient(activeConv)?.role || 'Crew Member'}</span>
                 </div>
               </header>
 
@@ -308,9 +320,13 @@ export default function ChatPage() {
             </>
           ) : (
             <div className="chat-empty">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-              <h3>Secure Channel Idle</h3>
-              <p>Select a transmission from the sidebar to begin.</p>
+              <div className="empty-icon-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                <div className="pulse-ring"></div>
+              </div>
+              <div className="empty-kicker">Secure Signal Desk</div>
+              <h3>Channel Idle</h3>
+              <p>Select a transmission from the sidebar to begin secure communication.</p>
             </div>
           )}
         </main>

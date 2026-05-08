@@ -327,7 +327,7 @@ router.get('/search', async (req, res) => {
     const q = String(req.query.q || '').trim();
 
     let sql = `
-      SELECT id, name, email, role, college, city, bio, skills, avatar_url, gender, credits
+      SELECT id, name, role, college, city, bio, skills, avatar_url, gender, credits
       FROM users
       WHERE 1 = 1
     `;

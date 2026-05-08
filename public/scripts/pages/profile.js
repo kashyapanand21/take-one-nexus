@@ -191,9 +191,7 @@ function requestCard(request, mode) {
     const otherAvatar = mode === 'incoming'
         ? request.requester_avatar_url
         : request.owner_avatar_url;
-    const contactEmail = mode === 'incoming'
-        ? request.requester_email
-        : request.owner_email;
+
     const roleLine = mode === 'incoming'
         ? `${request.requester_role || 'Crew'}${request.requester_city ? ' · ' + request.requester_city : ''}`
         : 'Project owner';
@@ -213,12 +211,11 @@ function requestCard(request, mode) {
             </div>
         `
         : '';
-    const contactLink = contactEmail
-        ? `<div class="request-actions-row">
-            <a class="request-contact" href="mailto:${esc(contactEmail)}?subject=TAKE%20ONE%20Collaboration">Email</a>
-            <a class="request-chat-btn" href="/chat?user=${request.requester_id || request.owner_id}">Chat</a>
-           </div>`
-        : '';
+    const contactLink = `
+        <div class="request-actions-row">
+            <a class="request-chat-btn" href="/chat?user=${request.requester_id || request.owner_id}">Open Chat</a>
+        </div>
+    `;
 
     return `
         <div class="request-card">
