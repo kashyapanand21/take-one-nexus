@@ -285,7 +285,7 @@ export default function HomePage() {
         <div className="search-bar-wrapper reveal reveal-d2">
           <div className="search-bar">
             <span className="search-icon">🔍</span>
-            <input type="text" id="liveSearchInput" placeholder="Search scripts by title or genre" autoComplete="off" />
+            <input type="text" id="liveSearchInput" aria-label="Search scripts" placeholder="Search scripts by title or genre" autoComplete="off" />
           </div>
           <div id="searchResults"></div>
         </div>
@@ -399,7 +399,7 @@ export default function HomePage() {
       </footer>
 
       {/* ── STATUS BAR ── */}
-      <div className="status-bar">
+      <div className="status-bar" role="status" aria-live="polite">
         <div className="status-item">
           <div className="status-dot"></div>System Online
         </div>
@@ -411,11 +411,11 @@ export default function HomePage() {
       </div>
 
       {/* Scripts */}
-      <Script src="/scripts/api/api.js" strategy="beforeInteractive" />
-      <Script src="/scripts/utils/helpers.js" strategy="beforeInteractive" />
-      <Script src="/scripts/components/ui.js" strategy="beforeInteractive" />
-      <Script src="/scripts/animations/common.js" strategy="beforeInteractive" />
-      <Script src="/scripts/pages/project.js" strategy="afterInteractive" />
+      <Script src="/scripts/api/api.js" strategy="afterInteractive" />
+      <Script src="/scripts/utils/helpers.js" strategy="afterInteractive" />
+      <Script src="/scripts/components/ui.js" strategy="afterInteractive" />
+      <Script src="/scripts/animations/common.js" strategy="afterInteractive" />
+      <Script src="/scripts/pages/project.js" strategy="lazyOnload" />
     </>
   );
 }
