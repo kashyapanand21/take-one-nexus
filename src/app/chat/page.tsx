@@ -553,41 +553,95 @@ export default function ChatPage() {
           ) : activeConv ? (
             <>
               <header className="chat-header">
-                <div className="header-info">
-                  <div className="header-name-row">
-                    <h3>{activeConv?.is_group ? activeConv.name : (activeRecipient?.name || 'Crew Member')}</h3>
-                    <div className="status-indicator">
-                      <span className="status-dot online"></span>
-                      <span>Signal Live</span>
+                <div className="header-left">
+                  <div className="header-avatar-container">
+                    <img
+                      src={activeConv.is_group ? (activeConv.avatar_url || '/assets/default-group.png') : getAvatarUrl(activeRecipient?.name || 'User', activeRecipient?.gender || 'Other', activeRecipient?.avatar_url)}
+                      alt=""
+                      className="header-avatar"
+                    />
+                    {!activeConv.is_group && <span className="presence-dot online"></span>}
+                  </div>
+                  <div className="header-info">
+                    <div className="header-primary-row">
+                      <h3 className="header-display-name">
+                        {activeConv?.is_group ? activeConv.name : (activeRecipient?.name || 'Crew Member')}
+                      </h3>
+                      {!activeConv.is_group && activeRecipient?.role && (
+                        <span className="header-role-tag">{activeRecipient.role}</span>
+                      )}
+                    </div>
+                    
+                    <div className="header-secondary-row">
+                      {activeConv.is_group ? (
+                        <div className="group-meta">
+                          <span className="member-count">{activeConv.users.length} members</span>
+                          <div className="members-preview">
+                            {activeConv.users.slice(0, 3).map((u, i) => (
+                              <img 
+                                key={u.id} 
+                                src={getAvatarUrl(u.name, u.gender || 'Other', u.avatar_url)} 
+                                alt="" 
+                                className="mini-avatar"
+                                style={{ zIndex: 10 - i, marginLeft: i > 0 ? '-8px' : '0' }}
+                              />
+                            ))}
+                            {activeConv.users.length > 3 && <span className="more-members">+{activeConv.users.length - 3}</span>}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="presence-info">
+                          <span className="status-text">Signal Live</span>
+                          <span className="separator">•</span>
+                          <span className="last-active">Last active: recently</span>
+                        </div>
+                      )}
                     </div>
                   </div>
-                  <span className="header-role">{activeConv?.is_group ? `${activeConv.users.length} Members` : (activeRecipient?.role || 'Crew Member')}</span>
                 </div>
+
                 <div className="header-actions">
-                  <button className="header-btn" title="Search messages">
+                  <button className="header-action-btn" title="Search Transmission">
                     <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" strokeWidth="2" fill="none"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                   </button>
                   {activeConv.is_group ? (
-                    <button className="header-btn danger" title="Leave group" onClick={() => handleLeaveGroup(activeConv.id)}>
-                      <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" strokeWidth="2" fill="none"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-                    </button>
+                    <>
+                      <button className="header-action-btn" title="Group Settings">
+                        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" strokeWidth="2" fill="none"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                      </button>
+                      <button className="header-action-btn danger" title="Leave Group" onClick={() => handleLeaveGroup(activeConv.id)}>
+                        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" strokeWidth="2" fill="none"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                      </button>
+                    </>
                   ) : (
-                    <button className="header-btn danger" title="Delete chat" onClick={() => handleDeleteConversation(activeConv.id)}>
-                      <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" strokeWidth="2" fill="none"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-                    </button>
+                    <>
+                      <button className="header-action-btn" title="More Options">
+                        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" strokeWidth="2" fill="none"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+                      </button>
+                      <button className="header-action-btn danger" title="Delete Transmission" onClick={() => handleDeleteConversation(activeConv.id)}>
+                        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" strokeWidth="2" fill="none"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                      </button>
+                    </>
                   )}
                 </div>
               </header>
 
               <div className="messages-area">
                 {messageLoading ? (
-                  <div className="message-state">Loading message history...</div>
+                  <div className="message-state">
+                    <div className="skeleton-loader">
+                      <div className="skeleton-item sent"></div>
+                      <div className="skeleton-item received"></div>
+                      <div className="skeleton-item sent"></div>
+                    </div>
+                    <span>Synchronizing Message History...</span>
+                  </div>
                 ) : messages.length === 0 ? (
                   <div className="message-state">No messages yet. Start the conversation.</div>
                 ) : (
                   messages.map((msg) => (
                     <div key={msg.id} className={`message-bubble ${msg.sender_id === user?.id ? 'sent' : 'received'}`}>
-                      {activeConv?.is_group && msg.sender_id !== user?.id && <div className="text-xs text-gray-400 mb-1 font-bold">{msg.sender ? msg.sender.name : 'Deleted User'}</div>}
+                      {activeConv?.is_group && msg.sender_id !== user?.id && <div className="msg-sender-name">{msg.sender ? msg.sender.name : 'Deleted User'}</div>}
                       <div className="msg-content">{msg.content}</div>
                       <small className="msg-time">{new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</small>
                     </div>
@@ -627,6 +681,16 @@ export default function ChatPage() {
               <div className="empty-kicker">Secure Signal Desk</div>
               <h3>Channel Idle</h3>
               <p>Select a transmission from the sidebar or message someone from the Crew page.</p>
+              <div className="empty-status-grid">
+                <div className="status-cell">
+                  <span className="cell-label">Encrypted</span>
+                  <span className="cell-value">AES-256</span>
+                </div>
+                <div className="status-cell">
+                  <span className="cell-label">Uptime</span>
+                  <span className="cell-value">99.9%</span>
+                </div>
+              </div>
             </div>
           )}
         </main>
