@@ -310,7 +310,9 @@ router.get('/me', authenticateUser, async (req, res) => {
 
     res.json({
       success: true,
-      user: profile
+      user: profile,
+      pusherKey: process.env.NEXT_PUBLIC_PUSHER_KEY,
+      pusherCluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER
     });
   } catch (error) {
     console.error('Fetch me error:', error.message);

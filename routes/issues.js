@@ -6,9 +6,16 @@ const prisma = new PrismaClient();
 const router = express.Router();
 
 // Helper to check if user is a developer/admin
+const ADMIN_EMAILS = [
+  'aarushgupta289@gmail.com',
+  'alok.r25012@csds.rishihood.edu.in'
+];
+
 function requireDeveloperOrAdmin(req, res, next) {
-  const role = req.user.role;
-  if (role !== 'Developer' && role !== 'Admin') {
+  const role = (req.user.role || '').toLowerCase();
+  const email = (req.user.email || '').toLowerCase();
+  
+  if (role !== 'developer' && role !== 'admin' && !ADMIN_EMAILS.includes(email)) {
     return res.status(403).json({ success: false, message: 'Access denied: Requires Developer role' });
   }
   next();

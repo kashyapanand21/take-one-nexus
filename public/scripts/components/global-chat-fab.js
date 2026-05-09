@@ -38,6 +38,33 @@
     return false;
   }
 
+  async function setupPusher(userId, key, cluster, badge) {
+    if (window.__takeOneFabPusherSetup) return;
+    window.__takeOneFabPusherSetup = true;
+
+    if (!window.Pusher) {
+      await new Promise((resolve) => {
+        const script = document.createElement('script');
+        script.src = 'https://js.pusher.com/8.2.0/pusher.min.js';
+        script.onload = resolve;
+        document.head.appendChild(script);
+      });
+    }
+
+    if (window.Pusher && key && cluster) {
+      const pusher = new Pusher(key, { cluster });
+      const channel = pusher.subscribe(`user-${userId}`);
+      channel.bind('message-notification', () => {
+        // Increment the badge or fetch exact count
+        let countText = badge.textContent;
+        let count = countText === '9+' ? 10 : (parseInt(countText) || 0);
+        count++;
+        badge.textContent = count > 9 ? '9+' : String(count);
+        badge.classList.add('is-visible');
+      });
+    }
+  }
+
   async function updateConversationCount(badge) {
     if (!hasLocalSession()) return;
 
@@ -48,11 +75,22 @@
       const json = await response.json();
       const count = json.success && typeof json.count === 'number' ? json.count : 0;
 
-      if (response.ok && json.success && count > 0) {
-        badge.textContent = count > 9 ? '9+' : String(count);
-        badge.classList.add('is-visible');
-      } else {
-        badge.classList.remove('is-visible');
+      if (response.ok && json.success) {
+        if (count > 0) {
+          badge.textContent = count > 9 ? '9+' : String(count);
+          badge.classList.add('is-visible');
+        } else {
+          badge.classList.remove('is-visible');
+        }
+
+        // Setup real-time listener if keys provided
+        const userDataStr = localStorage.getItem(USER_KEY);
+        if (userDataStr && json.pusherKey && json.pusherCluster) {
+          try {
+            const user = JSON.parse(userDataStr);
+            setupPusher(user.id, json.pusherKey, json.pusherCluster, badge);
+          } catch (e) {}
+        }
       }
     } catch (error) {
       console.warn('Could not load chat unread count', error);

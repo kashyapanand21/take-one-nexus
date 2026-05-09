@@ -90,13 +90,21 @@ router.get('/unread-count', authenticateUser, async (req, res) => {
     const count = await prisma.message.count({
       where: {
         is_read: false,
-        sender_id: { not: userId },
+        OR: [
+          { sender_id: { not: userId } },
+          { sender_id: null }
+        ],
         conversation: {
           users: { some: { id: userId } }
         }
       }
     });
-    res.json({ success: true, count });
+    res.json({ 
+      success: true, 
+      count,
+      pusherKey: process.env.NEXT_PUBLIC_PUSHER_KEY,
+      pusherCluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER
+    });
   } catch (error) {
     console.error('Fetch unread count error:', error.message);
     res.status(500).json({ success: false, message: 'Could not load unread count' });
@@ -240,7 +248,10 @@ router.get('/messages/:conversationId', authenticateUser, async (req, res) => {
     await prisma.message.updateMany({
       where: {
         conversation_id: conversationId,
-        sender_id: { not: userId },
+        OR: [
+          { sender_id: { not: userId } },
+          { sender_id: null }
+        ],
         is_read: false
       },
       data: { is_read: true }
@@ -306,6 +317,10 @@ router.post('/messages', authenticateUser, async (req, res) => {
 
       if (!conversation) {
         return res.status(403).json({ success: false, message: 'Access denied' });
+      }
+
+      if (!conversation.is_group && conversation.users.length < 2) {
+        return res.status(400).json({ success: false, message: 'This user is no longer available.' });
       }
 
       targetConversationId = conversation.id;

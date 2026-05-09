@@ -242,6 +242,47 @@ export default function ChatPage() {
   }, [fetchConversations, fetchMessages, openDirectConversation, setActiveConversation]);
 
   useEffect(() => {
+    if (!user) return;
+
+    if (!pusherRef.current) {
+      const pusherKey = process.env.NEXT_PUBLIC_PUSHER_KEY;
+      const pusherCluster = process.env.NEXT_PUBLIC_PUSHER_CLUSTER;
+
+      if (pusherKey && pusherCluster) {
+        pusherRef.current = new Pusher(pusherKey, {
+          cluster: pusherCluster
+        });
+      }
+    }
+
+    if (!pusherRef.current) return;
+
+    const userChannelName = `user-${user.id}`;
+    const userChannel = pusherRef.current.subscribe(userChannelName);
+
+    userChannel.bind('message-notification', (data: { conversationId: number, message: ChatMessage }) => {
+      setConversations((current) => {
+        const convIndex = current.findIndex((c) => c.id === data.conversationId);
+        if (convIndex > -1) {
+          const conv = current[convIndex];
+          const updatedConv = { ...conv, messages: [data.message] };
+          const newConvs = [...current];
+          newConvs.splice(convIndex, 1);
+          return [updatedConv, ...newConvs];
+        } else {
+          fetchConversations();
+          return current;
+        }
+      });
+    });
+
+    return () => {
+      userChannel.unbind_all();
+      pusherRef.current?.unsubscribe(userChannelName);
+    };
+  }, [user, fetchConversations]);
+
+  useEffect(() => {
     if (!activeConv) return;
 
     if (!pusherRef.current) {
@@ -264,11 +305,17 @@ export default function ChatPage() {
         if (prev.find((message) => message.id === data.message.id)) return prev;
         return [...prev, data.message];
       });
-      setConversations((current) => current.map((conversation) => (
-        conversation.id === data.message.conversation_id
-          ? { ...conversation, messages: [data.message] }
-          : conversation
-      )));
+      setConversations((current) => {
+        const convIndex = current.findIndex((c) => c.id === data.message.conversation_id);
+        if (convIndex > -1) {
+          const conv = current[convIndex];
+          const updatedConv = { ...conv, messages: [data.message] };
+          const newConvs = [...current];
+          newConvs.splice(convIndex, 1);
+          return [updatedConv, ...newConvs];
+        }
+        return current;
+      });
     });
 
     return () => {
@@ -435,12 +482,12 @@ export default function ChatPage() {
                     ref={inputRef}
                     type="text"
                     className="chat-input"
-                    placeholder={`Message ${activeConv?.is_group ? activeConv.name : (activeRecipient?.name || 'crew member')}...`}
+                    placeholder={(!activeConv?.is_group && activeRecipient?.id === -1) ? 'This user is no longer available.' : `Message ${activeConv?.is_group ? activeConv.name : (activeRecipient?.name || 'crew member')}...`}
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
-                    disabled={sending}
+                    disabled={sending || (!activeConv?.is_group && activeRecipient?.id === -1)}
                   />
-                  <button type="submit" className="send-btn" disabled={!newMessage.trim() || sending} aria-label="Send message">
+                  <button type="submit" className="send-btn" disabled={!newMessage.trim() || sending || (!activeConv?.is_group && activeRecipient?.id === -1)} aria-label="Send message">
                     <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
                   </button>
                 </div>
