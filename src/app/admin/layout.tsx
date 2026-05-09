@@ -44,6 +44,7 @@ export default function AdminLayout({
         <nav className="admin-nav">
           <Link href="/admin" className={pathname === '/admin' ? 'active' : ''}>Dashboard</Link>
           <Link href="/admin/users" className={pathname.startsWith('/admin/users') ? 'active' : ''}>Users</Link>
+          <Link href="/admin/issues" className={pathname.startsWith('/admin/issues') ? 'active' : ''}>Issues</Link>
           <Link href="/">Exit Terminal</Link>
         </nav>
       </header>

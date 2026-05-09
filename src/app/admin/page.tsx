@@ -1,15 +1,16 @@
 import React from 'react';
 import prisma from '@/lib/prisma';
 import Link from 'next/link';
+import AnalyticsCharts from '@/components/admin/AnalyticsCharts';
 
-export const dynamic = 'force-dynamic';
+export const dynamicConfig = 'force-dynamic';
 
 export default async function AdminDashboard() {
   const userCount = await prisma.user.count();
   const scriptCount = await prisma.script.count();
   const requestCount = await prisma.collaborationRequest.count();
   
-  // Get recent users
+  // Get recent 5 users (distinct by email implicitly since email is unique)
   const recentUsers = await prisma.user.findMany({
     take: 5,
     orderBy: { created_at: 'desc' }
@@ -39,6 +40,9 @@ export default async function AdminDashboard() {
           <div style={{ marginTop: '10px', fontSize: '9px', color: 'var(--silver)', letterSpacing: '2px' }}>COLLABORATION SIGNALS</div>
         </div>
       </div>
+
+      {/* Analytics Section */}
+      <AnalyticsCharts />
 
       <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '30px', borderBottom: '1px solid var(--border)', paddingBottom: '15px' }}>
         <div>

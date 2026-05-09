@@ -83,4 +83,46 @@ router.post('/email/test', authenticateUser, async (req, res) => {
   }
 });
 
+router.get('/analytics', authenticateUser, async (req, res) => {
+  try {
+    const role = req.user.role;
+    if (role !== 'Developer' && role !== 'Admin') {
+      return res.status(403).json({ success: false, message: 'Access denied: Requires Admin or Developer role' });
+    }
+
+    const [userRows] = await pool.query(`
+      SELECT DATE(created_at) as date, COUNT(*) as count 
+      FROM users 
+      WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+      GROUP BY DATE(created_at)
+      ORDER BY date ASC
+    `);
+
+    const [scriptRows] = await pool.query(`
+      SELECT DATE(created_at) as date, COUNT(*) as count 
+      FROM scripts 
+      WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+      GROUP BY DATE(created_at)
+      ORDER BY date ASC
+    `);
+
+    // Format dates to string
+    const formatRows = (rows) => rows.map(r => ({
+      date: new Date(r.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      count: Number(r.count)
+    }));
+
+    res.json({
+      success: true,
+      data: {
+        users: formatRows(userRows),
+        scripts: formatRows(scriptRows)
+      }
+    });
+  } catch (error) {
+    console.error('Analytics error:', error.message);
+    res.status(500).json({ success: false, message: 'Could not load analytics' });
+  }
+});
+
 module.exports = router;

@@ -53,11 +53,19 @@ export default function ChatPage() {
 
   const activeRecipient = useMemo(() => {
     if (!activeConv || !user) return null;
-    return activeConv.users.find((member) => member.id !== user.id) || null;
+    const member = activeConv.users.find((member) => member.id !== user.id);
+    if (!member && !activeConv.is_group) {
+      return { id: -1, name: 'Deleted User', role: 'Unknown', gender: 'Other' };
+    }
+    return member || null;
   }, [activeConv, user]);
 
   const getRecipient = useCallback((conv: Conversation) => {
-    return conv.users.find((member) => member.id !== user?.id) || conv.users[0];
+    const member = conv.users.find((member) => member.id !== user?.id);
+    if (!member && !conv.is_group) {
+      return { id: -1, name: 'Deleted User', role: 'Unknown', gender: 'Other' };
+    }
+    return member || conv.users[0];
   }, [user?.id]);
 
   const setActiveConversation = useCallback((conversation: Conversation, updateUrl = true) => {
@@ -412,7 +420,7 @@ export default function ChatPage() {
                 ) : (
                   messages.map((msg) => (
                     <div key={msg.id} className={`message-bubble ${msg.sender_id === user?.id ? 'sent' : 'received'}`}>
-                      {activeConv?.is_group && msg.sender_id !== user?.id && <div className="text-xs text-gray-400 mb-1 font-bold">{msg.sender.name}</div>}
+                      {activeConv?.is_group && msg.sender_id !== user?.id && <div className="text-xs text-gray-400 mb-1 font-bold">{msg.sender ? msg.sender.name : 'Deleted User'}</div>}
                       <div className="msg-content">{msg.content}</div>
                       <small className="msg-time">{new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</small>
                     </div>
