@@ -7,7 +7,17 @@ const {
   verifyEmailConnection
 } = require('../config/mailer');
 
+const Pusher = require('pusher');
 const router = express.Router();
+
+// Configure Pusher
+const pusher = new Pusher({
+  appId: process.env.PUSHER_APP_ID || '',
+  key: process.env.NEXT_PUBLIC_PUSHER_KEY || '',
+  secret: process.env.PUSHER_SECRET || '',
+  cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER || '',
+  useTLS: true
+});
 
 router.get('/email/status', authenticateUser, async (req, res) => {
   try {
@@ -130,6 +140,49 @@ router.get('/analytics', authenticateUser, async (req, res) => {
   } catch (error) {
     console.error('Analytics error:', error.message);
     res.status(500).json({ success: false, message: 'Could not load analytics' });
+  }
+});
+
+router.get('/stats', authenticateUser, async (req, res) => {
+  try {
+    const role = req.user.role;
+    const email = (req.user.email || '').toLowerCase();
+    
+    const isAuthorized = 
+      role === 'Developer' || 
+      role === 'Admin' || 
+      email === 'aarushgupta289@gmail.com' ||
+      email === 'alok.r25012@csds.rishihood.edu.in';
+
+    if (!isAuthorized) {
+      return res.status(403).json({ success: false, message: 'Access denied: Requires Admin or Developer role' });
+    }
+
+    const [userCount] = await pool.query('SELECT COUNT(*) as count FROM users');
+    const [scriptCount] = await pool.query('SELECT COUNT(*) as count FROM scripts');
+    const [requestCount] = await pool.query('SELECT COUNT(*) as count FROM collaboration_requests');
+    
+    const [recentUsers] = await pool.query(`
+      SELECT id, name, email, role, college, city, created_at 
+      FROM users 
+      ORDER BY created_at DESC 
+      LIMIT 5
+    `);
+
+    res.json({
+      success: true,
+      data: {
+        counts: {
+          users: userCount[0].count,
+          scripts: scriptCount[0].count,
+          requests: requestCount[0].count
+        },
+        recentUsers: recentUsers
+      }
+    });
+  } catch (error) {
+    console.error('Stats error:', error.message);
+    res.status(500).json({ success: false, message: 'Could not load stats' });
   }
 });
 

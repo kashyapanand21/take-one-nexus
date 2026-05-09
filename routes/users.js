@@ -5,9 +5,19 @@ const { pool } = require('../config/db');
 const { authenticateUser, requireSameUser } = require('../middleware/auth');
 const { PrismaClient } = require('@prisma/client');
 const { formatDisplayName } = require('../utils/formatting');
+const Pusher = require('pusher');
 
 const prisma = new PrismaClient();
 const router = express.Router();
+
+// Configure Pusher
+const pusher = new Pusher({
+  appId: process.env.PUSHER_APP_ID || '',
+  key: process.env.NEXT_PUBLIC_PUSHER_KEY || '',
+  secret: process.env.PUSHER_SECRET || '',
+  cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER || '',
+  useTLS: true
+});
 
 function createToken(user) {
   const secret = process.env.JWT_SECRET || 'takeone_fallback_secret_32_chars_long';
@@ -149,6 +159,22 @@ router.post('/register', async (req, res) => {
       },
       token: token
     });
+
+    // Trigger Pusher update for admin dashboard
+    if (process.env.PUSHER_APP_ID) {
+      pusher.trigger('admin-dashboard', 'update', {
+        type: 'USER_CREATED',
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          college: user.college,
+          city: user.city,
+          created_at: new Date().toISOString()
+        }
+      });
+    }
   } catch (error) {
     console.error('--- Registration Failed ---');
     console.error(`Error Type: ${error.constructor.name}`);
@@ -417,6 +443,20 @@ router.put('/:id', authenticateUser, requireSameUser, async (req, res) => {
         }
       }
     });
+
+    // Trigger Pusher update for admin dashboard
+    if (process.env.PUSHER_APP_ID) {
+      pusher.trigger('admin-dashboard', 'update', {
+        type: 'USER_UPDATED',
+        user: {
+          id: updatedUser.id,
+          name: formatDisplayName(updatedUser.name),
+          role: updatedUser.role,
+          college: updatedUser.college,
+          city: updatedUser.city
+        }
+      });
+    }
 
     res.json({
       success: true,

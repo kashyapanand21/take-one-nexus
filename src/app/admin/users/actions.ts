@@ -4,6 +4,7 @@ import prisma from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
+import pusher from '@/lib/pusher-server';
 
 const userSchema = z.object({
   name: z.string().min(2, 'Name is too short'),
@@ -56,6 +57,14 @@ export async function addUser(formData: any) {
     revalidatePath('/admin/users');
     revalidatePath('/admin');
     
+    // Trigger Pusher update for admin dashboard
+    if (process.env.PUSHER_APP_ID) {
+      pusher.trigger('admin-dashboard', 'update', {
+        type: 'USER_CREATED',
+        user: newUser
+      });
+    }
+    
     return { success: true, password: rawPassword, user: newUser };
   } catch (error: any) {
     if (error instanceof z.ZodError) {
@@ -77,6 +86,14 @@ export async function updateUser(id: number, formData: any) {
     revalidatePath('/admin/users');
     revalidatePath('/admin');
     
+    // Trigger Pusher update for admin dashboard
+    if (process.env.PUSHER_APP_ID) {
+      pusher.trigger('admin-dashboard', 'update', {
+        type: 'USER_UPDATED',
+        user: updatedUser
+      });
+    }
+    
     return { success: true, user: updatedUser };
   } catch (error: any) {
     if (error instanceof z.ZodError) {
@@ -97,6 +114,14 @@ export async function deleteUser(id: number) {
 
     revalidatePath('/admin/users');
     revalidatePath('/admin');
+    
+    // Trigger Pusher update for admin dashboard
+    if (process.env.PUSHER_APP_ID) {
+      pusher.trigger('admin-dashboard', 'update', {
+        type: 'USER_DELETED',
+        userId: id
+      });
+    }
     
     return { success: true };
   } catch (error: any) {

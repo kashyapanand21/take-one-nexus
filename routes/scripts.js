@@ -1,8 +1,18 @@
 const express = require('express');
 const { pool } = require('../config/db');
 const { authenticateUser } = require('../middleware/auth');
+const Pusher = require('pusher');
 
 const router = express.Router();
+
+// Configure Pusher
+const pusher = new Pusher({
+  appId: process.env.PUSHER_APP_ID || '',
+  key: process.env.NEXT_PUBLIC_PUSHER_KEY || '',
+  secret: process.env.PUSHER_SECRET || '',
+  cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER || '',
+  useTLS: true
+});
 
 function isCreatorRole(role) {
   const normalized = String(role || '').toLowerCase();
@@ -143,6 +153,14 @@ router.post('/', authenticateUser, async (req, res) => {
       message: 'Script uploaded successfully',
       data: scriptRows[0]
     });
+
+    // Trigger Pusher update for admin dashboard
+    if (process.env.PUSHER_APP_ID) {
+      pusher.trigger('admin-dashboard', 'update', {
+        type: 'SCRIPT_CREATED',
+        script: scriptRows[0]
+      });
+    }
   } catch (error) {
     console.error('Script upload error:', error.message);
     res.status(500).json({

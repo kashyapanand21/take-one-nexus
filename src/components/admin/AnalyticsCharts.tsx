@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
+import Pusher from 'pusher-js';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar
@@ -21,24 +22,47 @@ export default function AnalyticsCharts() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchAnalytics = async () => {
-      try {
-        const res = await fetch('/api/system/analytics');
-        const json = await res.json();
-        if (json.success) {
-          setData(json.data);
-        } else {
-          setError(json.message || 'Failed to load analytics');
-        }
-      } catch (err) {
-        setError('Error fetching analytics data');
-      } finally {
-        setLoading(false);
+  const fetchAnalytics = useCallback(async () => {
+    try {
+      const res = await fetch('/api/system/analytics');
+      const json = await res.json();
+      if (json.success) {
+        setData(json.data);
+      } else {
+        setError(json.message || 'Failed to load analytics');
       }
-    };
-    fetchAnalytics();
+    } catch (err) {
+      setError('Error fetching analytics data');
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchAnalytics();
+
+    // Initialize Pusher for real-time analytics updates
+    const pusherKey = process.env.NEXT_PUBLIC_PUSHER_KEY;
+    const pusherCluster = process.env.NEXT_PUBLIC_PUSHER_CLUSTER;
+
+    if (pusherKey && pusherCluster) {
+      const pusher = new Pusher(pusherKey, {
+        cluster: pusherCluster
+      });
+
+      const channel = pusher.subscribe('admin-dashboard');
+      channel.bind('update', () => {
+        // Debounce or just fetch fresh data
+        fetchAnalytics();
+      });
+
+      return () => {
+        channel.unbind_all();
+        pusher.unsubscribe('admin-dashboard');
+        pusher.disconnect();
+      };
+    }
+  }, [fetchAnalytics]);
 
   if (loading) {
     return (

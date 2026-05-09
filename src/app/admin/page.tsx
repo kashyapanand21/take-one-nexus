@@ -1,21 +1,10 @@
 import React from 'react';
-import prisma from '@/lib/prisma';
-import Link from 'next/link';
 import AnalyticsCharts from '@/components/admin/AnalyticsCharts';
+import AdminDashboardOverview from '@/components/admin/AdminDashboardOverview';
 
-export const dynamicConfig = 'force-dynamic';
+export const dynamic = 'force-dynamic';
 
 export default async function AdminDashboard() {
-  const userCount = await prisma.user.count();
-  const scriptCount = await prisma.script.count();
-  const requestCount = await prisma.collaborationRequest.count();
-  
-  // Get recent 5 users (distinct by email implicitly since email is unique)
-  const recentUsers = await prisma.user.findMany({
-    take: 5,
-    orderBy: { created_at: 'desc' }
-  });
-
   return (
     <div>
       <div className="admin-page-header">
@@ -23,60 +12,11 @@ export default async function AdminDashboard() {
         <p className="page-subtitle">Mission Overview & Real-time Production Signal</p>
       </div>
 
-      <div className="dashboard-grid">
-        <div className="stat-card">
-          <div className="stat-label">Production Crew</div>
-          <div className="stat-value">{userCount}</div>
-          <div style={{ marginTop: '10px', fontSize: '9px', color: 'var(--silver)', letterSpacing: '2px' }}>REGISTERED CREATORS</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">Scripts Locked</div>
-          <div className="stat-value">{scriptCount}</div>
-          <div style={{ marginTop: '10px', fontSize: '9px', color: 'var(--silver)', letterSpacing: '2px' }}>SCREENPLAYS ON FILE</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">Active Collabs</div>
-          <div className="stat-value">{requestCount}</div>
-          <div style={{ marginTop: '10px', fontSize: '9px', color: 'var(--silver)', letterSpacing: '2px' }}>COLLABORATION SIGNALS</div>
-        </div>
-      </div>
+      <AdminDashboardOverview />
 
       {/* Analytics Section */}
-      <AnalyticsCharts />
-
-      <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '30px', borderBottom: '1px solid var(--border)', paddingBottom: '15px' }}>
-        <div>
-          <h2 style={{ fontFamily: 'var(--font-title)', fontSize: '32px', letterSpacing: '2px', textTransform: 'uppercase', margin: 0 }}>Recent Transmissions</h2>
-          <p style={{ margin: '5px 0 0 0', fontSize: '10px', letterSpacing: '3px', color: 'var(--silver)', textTransform: 'uppercase' }}>Last 5 creators to join the production</p>
-        </div>
-        <Link href="/admin/users" className="btn-action">View Full Crew List →</Link>
-      </div>
-
-      <div className="admin-table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>Creator Name</th>
-              <th>Channel / Email</th>
-              <th>Role Designation</th>
-              <th>College / Base</th>
-              <th>Sync Date</th>
-            </tr>
-          </thead>
-          <tbody>
-            {recentUsers.map(user => (
-              <tr key={user.id}>
-                <td style={{ fontWeight: 'bold' }}>{user.name}</td>
-                <td style={{ color: 'var(--silver)', fontFamily: 'var(--font-main)' }}>{user.email}</td>
-                <td>
-                  <span className="role-badge">{user.role || 'GHOST'}</span>
-                </td>
-                <td style={{ color: 'var(--silver)' }}>{user.college || '—'}</td>
-                <td style={{ color: 'var(--silver)', fontSize: '10px' }}>{new Date(user.created_at).toLocaleTimeString()}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div style={{ marginTop: '60px' }}>
+        <AnalyticsCharts />
       </div>
 
       <div style={{ 
