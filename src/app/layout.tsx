@@ -4,7 +4,6 @@ import { Metadata, Viewport } from 'next';
 import Script from 'next/script';
 import { Space_Mono, Bebas_Neue, Cormorant_Garamond } from 'next/font/google';
 import GlobalIssueReporter from '@/components/GlobalIssueReporter';
-import Navbar from '@/components/Navbar';
 
 const spaceMono = Space_Mono({
   weight: ['400', '700'],
@@ -63,7 +62,6 @@ export default function RootLayout({
       </head>
       <body className={`${spaceMono.className}`}>
         <div className="scroll-progress" id="scrollProgress"></div>
-        <Navbar />
         {children}
         <GlobalIssueReporter />
         <Script src="/scripts/components/global-chat-fab.js" strategy="afterInteractive" />
@@ -71,4 +69,3 @@ export default function RootLayout({
     </html>
   );
 }
-
