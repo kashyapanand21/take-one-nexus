@@ -3,7 +3,17 @@
   "builds": [
     {
       "src": "server.js",
-      "use": "@vercel/node"
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": [
+          "public/**",
+          "routes/**",
+          "config/**",
+          "middleware/**",
+          "utils/**",
+          "database/**"
+        ]
+      }
     },
     {
       "src": "package.json",
@@ -67,7 +77,7 @@
       "dest": "server.js"
     },
     {
-      "src": "/((?!admin|api|_next|profile|crew|legal|moderation|chat).*)",
+      "src": "/((?!admin|api|_next|profile|crew|legal|moderation|chat|developer).*)",
       "dest": "server.js"
     }
   ]

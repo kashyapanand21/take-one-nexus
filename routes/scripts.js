@@ -14,8 +14,13 @@ const pusher = new Pusher({
   useTLS: true
 });
 
-  // All roles can now upload work in the new ecosystem
+/**
+ * Helper to check if a user role is authorized to upload scripts.
+ * In the new ecosystem, all roles are permitted to showcase their work.
+ */
+function isCreatorRole(role) {
   return true;
+}
 
 async function safeQuery(sql, params = []) {
   try {

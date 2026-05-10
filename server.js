@@ -169,28 +169,33 @@ app.use((err, req, res, next) => {
 });
 
 
-const server = app.listen(PORT, () => {
-  console.log('');
-  console.log('TAKE ONE API running');
-  console.log(`Port: ${PORT}`);
-  console.log('');
-  console.log('Available now:');
-  console.log('GET /');
-  console.log('GET /api/health');
-  console.log('GET /api/home');
-  console.log('GET /api/scripts/search');
-  console.log('POST /api/scripts');
-  console.log('POST /api/requests');
-  console.log('GET /api/requests/user/:id');
-  console.log('POST /api/users/register');
-  console.log('POST /api/users/login');
-  console.log('');
-});
+// For Vercel serverless environment, we export the app and only call listen if run directly
+if (require.main === module || process.env.NODE_ENV !== 'production') {
+  const server = app.listen(PORT, () => {
+    console.log('');
+    console.log('TAKE ONE API running');
+    console.log(`Port: ${PORT}`);
+    console.log('');
+    console.log('Available now:');
+    console.log('GET /');
+    console.log('GET /api/health');
+    console.log('GET /api/home');
+    console.log('GET /api/scripts/search');
+    console.log('POST /api/scripts');
+    console.log('POST /api/requests');
+    console.log('GET /api/requests/user/:id');
+    console.log('POST /api/users/register');
+    console.log('POST /api/users/login');
+    console.log('');
+  });
 
-server.on('error', (error) => {
-  console.error('Server failed to start:', error.message);
-  process.exit(1);
-});
+  server.on('error', (error) => {
+    console.error('Server failed to start:', error.message);
+    process.exit(1);
+  });
+}
+
+module.exports = app;
 
 connectDB().catch((error) => {
   console.error('Database boot check failed:', error.message);
