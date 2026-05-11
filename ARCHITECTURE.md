@@ -19,6 +19,7 @@ TAKE ONE Nexus is a **hybrid architecture** — a Next.js React app and a standa
 - **Routing consistency:** `public/project.htm` and shared navigation now point crew access to `/crew` while `vercel.json` continues rewriting `/` to `/project.htm`.
 - **Session authority model:** frontend auth now validates persisted local session state against backend `/api/users/me` (cookie + JWT middleware), preventing stale local tokens from causing auth/UI desync.
 - **Navbar interaction hardening:** shared navbar re-render flow now uses defensive event listeners (instead of inline handlers) with guarded API access to avoid broken CTA behavior when scripts hydrate in different orders.
+- **Modal/runtime safety hardening:** static landing now explicitly loads `components/modal.js`, defers dependent page scripts, and uses fallback-safe modal open handlers so auth/login UI interactions continue working even if one helper script fails.
 
 ```
 ┌─────────────────────────────────────────────────────────┐

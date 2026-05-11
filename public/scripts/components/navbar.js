@@ -82,6 +82,31 @@ const Navbar = {
         const modal = document.getElementById('loginModal');
         if (!btn) return;
 
+        const openAuthModalSafely = () => {
+            try {
+                if (!modal) {
+                    console.error('Navbar auth modal open failed: #loginModal missing');
+                    return;
+                }
+
+                if (typeof window.openTakeOneModal === 'function') {
+                    window.openTakeOneModal(modal);
+                    return;
+                }
+
+                if (typeof openModal === 'function') {
+                    openModal(modal);
+                    return;
+                }
+
+                // Fallback so CTA still works even if modal helper script fails.
+                modal.classList.add('show');
+                document.body.style.overflow = 'hidden';
+            } catch (error) {
+                console.error('Navbar auth modal open crashed:', error);
+            }
+        };
+
         if (user) {
             btn.addEventListener('click', async () => {
                 try {
@@ -97,9 +122,7 @@ const Navbar = {
             return;
         }
 
-        if (typeof openModal === 'function' && modal) {
-            btn.addEventListener('click', () => openModal(modal));
-        }
+        btn.addEventListener('click', openAuthModalSafely);
     }
 };
 

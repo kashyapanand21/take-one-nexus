@@ -34,6 +34,7 @@ The platform targets student film communities and indie filmmakers, with an aest
 - Added server-backed session validation in the frontend auth layer (`/api/users/me`) so localStorage auth state cannot drift from cookie/session state.
 - Hardened navbar CTA bindings to avoid inline logout dependency and to safely handle missing API/auth globals without freezing navigation.
 - Added additional null checks in project page auth/search interactions to prevent runtime crashes that could break navbar/login listeners.
+- Fixed landing-page auth modal bootstrap by loading `/scripts/components/modal.js` on `project.htm`, deferring page scripts consistently, and adding guarded modal open/bind logic so `Join Now` and navbar CTA clicks remain functional after navbar re-renders.
 
 ---
 

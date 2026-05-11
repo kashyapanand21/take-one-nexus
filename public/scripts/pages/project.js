@@ -1094,31 +1094,50 @@ const scriptModalRequestBtn = document.getElementById('scriptModalRequestBtn');
 
 /* Modal logic moved to /scripts/components/modal.js */
 
-function openTakeOneModal(modal) {
-  if (!modal) return;
-  if (typeof openModal === 'function') {
-    openModal(modal);
-    return;
-  }
+function bindSafeClick(element, handler, contextLabel) {
+  if (!element) return;
+  element.addEventListener('click', (event) => {
+    try {
+      handler(event);
+    } catch (error) {
+      console.error(`${contextLabel || 'Click handler'} failed:`, error);
+    }
+  });
+}
 
-  modal.classList.add('show');
-  document.body.style.overflow = 'hidden';
+function openTakeOneModal(modal) {
+  try {
+    if (!modal) return;
+    if (typeof openModal === 'function') {
+      openModal(modal);
+      return;
+    }
+
+    modal.classList.add('show');
+    document.body.style.overflow = 'hidden';
+  } catch (error) {
+    console.error('openTakeOneModal failed:', error);
+  }
 }
 
 function closeTakeOneModal(modal) {
-  if (!modal) return;
-  if (typeof closeModal === 'function') {
-    closeModal(modal);
-    return;
-  }
+  try {
+    if (!modal) return;
+    if (typeof closeModal === 'function') {
+      closeModal(modal);
+      return;
+    }
 
-  modal.classList.remove('show');
-  if (!document.querySelector('.modal.show')) {
-    document.body.style.overflow = '';
+    modal.classList.remove('show');
+    if (!document.querySelector('.modal.show')) {
+      document.body.style.overflow = '';
+    }
+  } catch (error) {
+    console.error('closeTakeOneModal failed:', error);
   }
 }
 
-loginBtn?.addEventListener('click', () => {
+bindSafeClick(loginBtn, () => {
   if (typeof API === 'undefined' || !API.auth) {
     console.error('API auth module unavailable during login button click');
     return;
@@ -1128,24 +1147,24 @@ loginBtn?.addEventListener('click', () => {
   } else {
     openTakeOneModal(loginModal);
   }
-});
+}, 'Login CTA');
 
-registerLink?.addEventListener('click', (e) => {
+bindSafeClick(registerLink, (e) => {
   e.preventDefault();
   closeTakeOneModal(loginModal);
   openTakeOneModal(registerModal);
-});
+}, 'Register tab open');
 
-backToLoginLink?.addEventListener('click', (e) => {
+bindSafeClick(backToLoginLink, (e) => {
   e.preventDefault();
   closeTakeOneModal(registerModal);
   openTakeOneModal(loginModal);
-});
+}, 'Back to login tab');
 
-closeLoginBtn?.addEventListener('click', () => closeTakeOneModal(loginModal));
-closeRegisterBtn?.addEventListener('click', () => closeTakeOneModal(registerModal));
-closePeopleModalBtn?.addEventListener('click', () => closeTakeOneModal(peopleModal));
-closeScriptModalBtn?.addEventListener('click', () => closeTakeOneModal(scriptModal));
+bindSafeClick(closeLoginBtn, () => closeTakeOneModal(loginModal), 'Close login modal');
+bindSafeClick(closeRegisterBtn, () => closeTakeOneModal(registerModal), 'Close register modal');
+bindSafeClick(closePeopleModalBtn, () => closeTakeOneModal(peopleModal), 'Close people modal');
+bindSafeClick(closeScriptModalBtn, () => closeTakeOneModal(scriptModal), 'Close script modal');
 
 function openAuthFromUrl() {
   const authMode = new URLSearchParams(window.location.search).get('auth');
