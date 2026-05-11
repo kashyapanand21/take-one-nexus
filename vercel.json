@@ -22,6 +22,10 @@
   ],
   "routes": [
     {
+      "src": "/",
+      "dest": "/project.htm"
+    },
+    {
       "src": "/api/(.*)",
       "dest": "server.js"
     },
