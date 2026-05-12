@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       disallow: ['/api/', '/admin/'],
     },
-    sitemap: 'https://take-one-nexus.vercel.app/sitemap.xml',
+    sitemap: 'https://takeone-nexus.net.in/sitemap.xml',
   };
 }

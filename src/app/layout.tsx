@@ -29,11 +29,11 @@ const cormorantGaramond = Cormorant_Garamond({
 export const metadata: Metadata = {
   title: 'TAKE ONE — Film Crew Connect',
   description: 'Where scripts become films. Connect with student filmmakers across campuses.',
-  metadataBase: new URL('https://take-one-nexus.vercel.app'),
+  metadataBase: new URL('https://takeone-nexus.net.in'),
   openGraph: {
     title: 'TAKE ONE — Film Crew Connect',
     description: 'Where scripts become films. Connect with student filmmakers across campuses.',
-    url: 'https://take-one-nexus.vercel.app',
+    url: 'https://takeone-nexus.net.in',
     siteName: 'TAKE ONE',
     type: 'website',
   },

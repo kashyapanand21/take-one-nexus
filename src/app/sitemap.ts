@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://take-one-nexus.vercel.app';
+  const baseUrl = 'https://takeone-nexus.net.in';
   
   return [
     {
