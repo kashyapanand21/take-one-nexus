@@ -17,6 +17,15 @@ A fully integrated, real-time communication suite powered by Pusher.
 - **Group Chats:** Create multi-user channels for production crews and teams.
 - **Live Sync:** Real-time message delivery with cinematic animations.
 - **Intelligent Unread:** Accurate unread message tracking and global notifications.
+- **Message Pagination:** Cursor-based pagination loads the latest 50 messages on open; scroll history on demand via "↑ Load Earlier Messages".
+- **Date Grouping:** Messages are visually separated under sticky date pills (TODAY, YESTERDAY, or full date).
+
+### 🏆 Leaderboard
+A real-time community ranking system powered by the Credits engine.
+- **Top-100 Ranking:** Live leaderboard ranks all creators by credits earned, with tiebreaking by name.
+- **Cinematic UI:** Dedicated `/leaderboard.htm` page with a styled table showing rank, avatar, display name, role, and credit count.
+- **Credit FAQ:** Collapsible, cinematic FAQ cards explain how credits are earned, where they appear, and upcoming marketplace features.
+- **Navbar Integration:** Leaderboard link added across all platform pages.
 
 ### 🛡️ Developer & Platform Security
 Robust systems for maintaining platform integrity.

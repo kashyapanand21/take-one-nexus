@@ -3,8 +3,15 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Pusher from 'pusher-js';
 import { getAvatarUrl } from '@/lib/avatars';
+import { format } from 'date-fns';
 import CreateGroupModal from '@/components/CreateGroupModal';
 import './chat.css';
+
+// ── SKELETON COMPONENT ──
+const Skeleton = ({ className }: { className: string }) => (
+  <div className={`animate-pulse bg-gray-800/50 rounded ${className}`}></div>
+);
+
 
 interface User {
   id: number;
@@ -64,6 +71,27 @@ export default function ChatPage() {
   const [showMenu, setShowMenu] = useState(false);
   const [chatSearchQuery, setChatSearchQuery] = useState('');
   const [isMuted, setIsMuted] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  // Group messages by date
+  const groupMessagesByDate = (msgs: ChatMessage[]) => {
+    const groups: { [key: string]: ChatMessage[] } = {};
+    msgs.forEach(msg => {
+      const date = format(new Date(msg.created_at), 'yyyy-MM-dd');
+      if (!groups[date]) groups[date] = [];
+      groups[date].push(msg);
+    });
+    return groups;
+  };
+
+  const getFriendlyDate = (dateStr: string) => {
+    const today = format(new Date(), 'yyyy-MM-dd');
+    const yesterday = format(new Date(Date.now() - 86400000), 'yyyy-MM-dd');
+    if (dateStr === today) return 'TODAY';
+    if (dateStr === yesterday) return 'YESTERDAY';
+    return format(new Date(dateStr), 'MMMM d, yyyy').toUpperCase();
+  };
 
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -114,15 +142,18 @@ export default function ChatPage() {
     }
   }, []);
 
-  const fetchMessages = useCallback(async (convId: number) => {
-    setMessageLoading(true);
+  const fetchMessages = useCallback(async (convId: number, beforeId: number | null = null) => {
+    if (beforeId) setIsLoadingMore(true);
+    else setMessageLoading(true);
+
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('take_one_token') : null;
-      const res = await fetch(`/api/chat/messages/${convId}`, {
+      const url = `/api/chat/messages/${convId}${beforeId ? `?before=${beforeId}` : ''}`;
+      const res = await fetch(url, {
         credentials: 'include',
         headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       });
-      
+
       if (res.status === 401) {
         window.location.href = '/?auth=login';
         return;
@@ -136,17 +167,31 @@ export default function ChatPage() {
         return;
       }
 
-      setMessages(json.data || []);
+      if (beforeId) {
+        setMessages(prev => [...(json.data || []), ...prev]);
+      } else {
+        setMessages(json.data || []);
+      }
+
+      setHasMore(json.hasMore ?? false);
       setState('ready');
-      setTimeout(() => inputRef.current?.focus(), 100);
+      if (!beforeId) setTimeout(() => inputRef.current?.focus(), 100);
     } catch (err: any) {
       console.error('Failed to fetch messages', err);
       setState('error');
       setStatusText(err.message || 'The Nexus connection was interrupted.');
     } finally {
       setMessageLoading(false);
+      setIsLoadingMore(false);
     }
   }, []);
+
+  const loadMoreMessages = useCallback(() => {
+    if (hasMore && !isLoadingMore && activeConv && messages.length > 0) {
+      fetchMessages(activeConv.id, messages[0].id);
+    }
+  }, [hasMore, isLoadingMore, activeConv, messages, fetchMessages]);
+
 
   const fetchConversations = useCallback(async () => {
     try {
@@ -638,6 +683,7 @@ export default function ChatPage() {
         <nav>
           <a href="/#explore">Explore</a>
           <a href="/crew.htm">Crew</a>
+          <a href="/leaderboard.htm">Leaderboard</a>
           <a href="/#upload">Upload</a>
           <a href="/profile">Profile</a>
           {user?.role && ['admin', 'developer', 'moderator'].includes(user.role.toLowerCase()) && (
@@ -879,15 +925,63 @@ export default function ChatPage() {
                 ) : messages.length === 0 ? (
                   <div className="message-state">No messages yet. Start the conversation.</div>
                 ) : (
-                  messages
-                    .filter(msg => (msg.content || '').toLowerCase().includes(chatSearchQuery.toLowerCase()))
-                    .map((msg) => (
-                      <div key={msg.id} className={`message-bubble ${msg.sender_id === user?.id ? 'sent' : 'received'}`}>
-                        {activeConv?.is_group && msg.sender_id !== user?.id && <div className="msg-sender-name">{getDisplayName(msg.sender)}</div>}
-                        <div className="msg-content">{msg.content}</div>
-                        <small className="msg-time">{new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</small>
+                  <>
+                    {hasMore && (
+                      <div style={{ textAlign: 'center', padding: '12px 0' }}>
+                        <button
+                          onClick={loadMoreMessages}
+                          disabled={isLoadingMore}
+                          style={{
+                            background: 'transparent',
+                            border: '1px solid rgba(255,255,255,0.1)',
+                            color: 'rgba(255,255,255,0.5)',
+                            fontFamily: "'Space Mono', monospace",
+                            fontSize: '10px',
+                            letterSpacing: '0.2em',
+                            padding: '8px 20px',
+                            cursor: isLoadingMore ? 'not-allowed' : 'pointer',
+                            textTransform: 'uppercase',
+                            transition: 'all 0.3s ease'
+                          }}
+                        >
+                          {isLoadingMore ? 'Loading...' : '↑ Load Earlier Messages'}
+                        </button>
                       </div>
-                    ))
+                    )}
+                    {Object.entries(groupMessagesByDate(
+                      messages.filter(msg => (msg.content || '').toLowerCase().includes(chatSearchQuery.toLowerCase()))
+                    )).map(([dateStr, dateMsgs]) => (
+                      <div key={dateStr}>
+                        <div style={{
+                          textAlign: 'center',
+                          padding: '16px 0 8px',
+                          position: 'sticky',
+                          top: 0,
+                          zIndex: 2
+                        }}>
+                          <span style={{
+                            background: 'rgba(10,10,10,0.85)',
+                            border: '1px solid rgba(255,255,255,0.08)',
+                            borderRadius: '2px',
+                            color: 'rgba(255,255,255,0.35)',
+                            fontFamily: "'Bebas Neue', sans-serif",
+                            fontSize: '10px',
+                            letterSpacing: '0.25em',
+                            padding: '4px 14px',
+                          }}>
+                            {getFriendlyDate(dateStr)}
+                          </span>
+                        </div>
+                        {dateMsgs.map((msg) => (
+                          <div key={msg.id} className={`message-bubble ${msg.sender_id === user?.id ? 'sent' : 'received'}`}>
+                            {activeConv?.is_group && msg.sender_id !== user?.id && <div className="msg-sender-name">{getDisplayName(msg.sender)}</div>}
+                            <div className="msg-content">{msg.content}</div>
+                            <small className="msg-time">{new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</small>
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+                  </>
                 )}
                 {Object.keys(typingUsers).length > 0 && (
                   <div className="typing-indicator">

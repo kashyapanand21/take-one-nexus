@@ -286,9 +286,16 @@ router.get('/messages/:conversationId', authenticateUser, async (req, res) => {
       data: { is_read: true }
     });
 
+    const limit = parseInt(req.query.limit) || 50;
+    const before = req.query.before ? parseInt(req.query.before) : null;
+
     const messages = await prisma.message.findMany({
-      where: { conversation_id: conversationId },
-      orderBy: { created_at: 'asc' },
+      where: { 
+        conversation_id: conversationId,
+        ...(before ? { id: { lt: before } } : {})
+      },
+      orderBy: { created_at: 'desc' },
+      take: limit,
       include: {
         sender: {
           select: {
@@ -302,9 +309,12 @@ router.get('/messages/:conversationId', authenticateUser, async (req, res) => {
       }
     });
 
+    const sortedMessages = [...messages].reverse();
+
     res.json({
       success: true,
-      data: messages.map(m => ({
+      hasMore: messages.length === limit,
+      data: sortedMessages.map(m => ({
         ...m,
         sender: m.sender ? { 
           ...m.sender, 

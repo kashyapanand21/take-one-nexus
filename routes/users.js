@@ -635,4 +635,34 @@ router.get('/public/:id', async (req, res) => {
   }
 });
 
+/**
+ * GET /api/users/leaderboard
+ * Get top users ranked by credits
+ */
+router.get('/leaderboard', async (req, res) => {
+  try {
+    const rows = await safeQuery(
+      `SELECT id, name, role, college, city, avatar_url, gender, credits, screen_name, display_preference
+       FROM users
+       WHERE credits > 0
+       ORDER BY credits DESC, name ASC
+       LIMIT 100`
+    );
+
+    res.json({
+      success: true,
+      data: rows.map(r => ({
+        ...r,
+        displayName: getCanonicalDisplayName(r)
+      }))
+    });
+  } catch (error) {
+    console.error('Leaderboard fetch error:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Could not load leaderboard signal'
+    });
+  }
+});
+
 module.exports = router;

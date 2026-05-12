@@ -8,7 +8,12 @@
 
 ### 2026-05
 
-- **Homepage default route** — `vercel.json` rewrite added so that `https://take-one-nexus.vercel.app/` cleanly serves `project.htm` without a redirect. URL stays at `/`.
+- **Leaderboard system** — `GET /api/users/leaderboard` endpoint added to `routes/users.js`. Returns top-100 users ranked by `credits` descending. `public/leaderboard.htm` cinematic page created with ranked user table and `public/scripts/pages/leaderboard.js` for dynamic rendering.
+- **FAQ section** — Collapsible FAQ cards added to `leaderboard.htm` documenting credit earning, visibility, and upcoming marketplace. Single-open accordion pattern enforced via JS.
+- **Chat message pagination** — `GET /api/chat/messages/:conversationId` now accepts `?before=<messageId>` and `?limit=<n>` (default 50). API returns `hasMore` flag. Frontend fetches newest 50 messages on open; user can click "↑ Load Earlier Messages" to prepend older history.
+- **Chat date grouping** — Messages in the chat UI are now grouped under sticky date separator pills (TODAY, YESTERDAY, MMMM D, YYYY). `groupMessagesByDate` and `getFriendlyDate` helpers added directly to `ChatPage` component.
+- **date-fns dependency** — Added `date-fns` package for reliable date formatting without locale/timezone surprises.
+- **Leaderboard nav links** — "Leaderboard" link added to navbars in `project.htm`, `crew.htm`, `src/app/chat/page.tsx`, and `src/app/profile/page.tsx`.
 - **Designer role** — Added `Designer` to `TAKE_ONE_ROLES` constant and `ROLE_ICONS` map. Created `public/designer.html` landing page with full cinematic branding.
 - **Centralized role system** — Moved all role definitions to a single source of truth: `public/scripts/constants/roles.js`. Exposes `TAKE_ONE_ROLES`, `ROLE_ICONS`, `ROLE_SLUGS`, and `LEGACY_ROLE_MAPPING` on both `window.*` (browser) and `module.exports` (Node.js).
 - **Legacy role mapping** — `LEGACY_ROLE_MAPPING` introduced in `roles.js` to normalize old database values (`Cinematographer`, `Sound`, `Gaffer`, etc.) to current role names without a migration.
@@ -140,7 +145,7 @@
 ### High Priority
 - [ ] Add rate limiting to `/api/users/login` and `/api/users/register` (e.g., `express-rate-limit`)
 - [ ] Add server-side file type and size validation for avatar uploads
-- [ ] Implement pagination (`limit` + `offset`) on `/api/scripts/search`
+- [x] Implement pagination (`limit` + `offset`) on `/api/chat/messages` ✅ Done (cursor-based via `before` param)
 - [ ] Validate `Script.role_data` JSON against a Zod schema before persisting
 
 ### Medium Priority

@@ -119,6 +119,7 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
             <a href="/">Home</a>
             <a href="/#explore">Explore</a>
             <a href="/crew.htm">Crew</a>
+            <a href="/leaderboard.htm">Leaderboard</a>
             <a href="/chat" className="nav-chat-link">Messages</a>
             {isOwner && <button className="profile-logout" id="profileLogoutBtn" type="button">Logout</button>}
           </nav>

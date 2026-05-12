@@ -213,6 +213,8 @@ router.get('/:id', async (req, res, next) => {
 - Database queries must use indexed columns in `WHERE` clauses (see schema indexes)
 - Do not `SELECT *` — specify only the fields the client actually needs
 - Paginate all list endpoints — never return unbounded result sets
+- Use **cursor-based pagination** (not offset) for ordered message feeds: `?before=<id>&limit=<n>`. Return `hasMore: boolean` alongside `data` in the response. Reference: `GET /api/chat/messages/:conversationId`.
+- Leaderboard-style ranking: always sort by the ranking column first, then by name for tiebreaking. Cap at a hard limit (100 rows). Reference: `GET /api/users/leaderboard`.
 
 ### Frontend
 - Lazy-load images: use `loading="lazy"` on `<img>` tags below the fold
