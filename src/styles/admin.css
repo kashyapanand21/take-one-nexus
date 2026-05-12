@@ -437,6 +437,48 @@ tr:hover td {
   transform: translateY(0);
 }
 
+.btn-download {
+  background: rgba(0, 255, 255, 0.05);
+  color: var(--cyan);
+  border: 1px solid var(--cyan);
+  padding: 16px 32px;
+  font-family: var(--font-title);
+  font-size: 14px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+  cursor: pointer;
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.1), inset 0 0 10px rgba(0, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+  white-space: nowrap;
+}
+
+.btn-download:hover {
+  background: var(--cyan);
+  color: var(--void);
+  box-shadow: 0 0 30px var(--cyan);
+  transform: translateY(-2px);
+  border-color: var(--cyan);
+}
+
+.btn-download:active {
+  transform: translateY(0);
+}
+
+.btn-download svg {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.3s;
+}
+
+.btn-download:hover svg {
+  transform: translateY(2px);
+}
+
 /* ── FOOTER / STATUS BAR ── */
 .admin-footer {
   padding: 20px 40px;

@@ -92,6 +92,44 @@ export default function UserManagement({ initialUsers }: Props) {
     }
   };
 
+  const downloadCSV = () => {
+    try {
+      console.log('Initiating Crew Database Export...');
+      
+      const headers = ['Name', 'Email', 'Role/Designation', 'College', 'City', 'Account Creation Date'];
+      const rows = filteredUsers.map(user => [
+        user.name,
+        user.email,
+        user.role || 'GHOST',
+        user.college || '—',
+        user.city || '—',
+        new Date(user.created_at).toLocaleDateString()
+      ]);
+
+      const csvContent = [
+        headers.join(','),
+        ...rows.map(row => row.map(value => `"${String(value).replace(/"/g, '""')}"`).join(','))
+      ].join('\n');
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      const date = new Date().toISOString().split('T')[0];
+      
+      link.setAttribute('href', url);
+      link.setAttribute('download', `takeone-users-${date}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      console.log('Crew Database Export Successful.');
+    } catch (error) {
+      console.error('Crew Database Export Failed:', error);
+      alert('Failed to generate CSV export. Check console for details.');
+    }
+  };
+
   return (
     <div>
       <div className="search-container">
@@ -102,9 +140,19 @@ export default function UserManagement({ initialUsers }: Props) {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-        <button className="btn-add" onClick={() => router.push('/admin/users/add')} aria-label="Add new crew member">
-          <span>+ NEW CREW SIGNAL</span>
-        </button>
+        <div style={{ display: 'flex', gap: '15px' }}>
+          <button className="btn-download" onClick={downloadCSV} aria-label="Download CSV">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            <span>DOWNLOAD CSV</span>
+          </button>
+          <button className="btn-add" onClick={() => router.push('/admin/users/add')} aria-label="Add new crew member">
+            <span>+ NEW CREW SIGNAL</span>
+          </button>
+        </div>
       </div>
 
       {loading && (
@@ -144,13 +192,21 @@ export default function UserManagement({ initialUsers }: Props) {
                   <td data-label="LOCATION" style={{ color: 'var(--silver)' }}>{user.city || '—'}</td>
                   <td data-label="SYNC DATE" style={{ color: 'var(--silver)', fontSize: '10px' }}>{new Date(user.created_at).toLocaleDateString()}</td>
                   <td data-label="OPERATIONS">
-                    <button 
-                      className="btn-action btn-delete" 
-                      onClick={() => handleDelete(user.id)}
-                      disabled={deletingId === user.id}
-                    >
-                      {deletingId === user.id ? 'WIPING...' : 'WIPE'}
-                    </button>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <button 
+                        className="btn-action" 
+                        onClick={() => router.push(`/profile?id=${user.id}`)}
+                      >
+                        VIEW PROFILE
+                      </button>
+                      <button 
+                        className="btn-action btn-delete" 
+                        onClick={() => handleDelete(user.id)}
+                        disabled={deletingId === user.id}
+                      >
+                        {deletingId === user.id ? 'WIPING...' : 'WIPE'}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))

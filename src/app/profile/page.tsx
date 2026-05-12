@@ -44,12 +44,19 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
     let rawUser;
     let isOwner = false;
 
-    if (targetId && authUser?.id !== Number(targetId)) {
+    if (targetId) {
+      if (isNaN(Number(targetId))) {
+        console.warn(`[PROFILE_NAVIGATION_WARNING]: Invalid targetId detected: "${targetId}". Redirecting to own profile.`);
+      }
+    }
+
+    if (targetId && !isNaN(Number(targetId)) && authUser?.id !== Number(targetId)) {
       // Viewing someone else's public profile
       const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
       const res = await fetch(`${baseUrl}/api/users/public/${targetId}`, { cache: 'no-store' });
       const json = await res.json();
       if (!json.success) {
+        console.error(`[PROFILE_FETCH_FAILURE]: Failed to load public profile for ID ${targetId}. Error: ${json.message}`);
         throw new Error(json.message || 'Profile not found');
       }
       rawUser = json.data;
@@ -444,13 +451,42 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
         <Script src="/scripts/pages/profile.js" strategy="afterInteractive" />
       </>
     );
-  } catch (criticalError) {
+  } catch (criticalError: any) {
     console.error('[CRITICAL_PROFILE_RENDER_FAILURE]:', criticalError);
+    
+    // Attempt to extract helpful details for debugging
+    const errorMsg = criticalError?.message || 'Unknown render failure';
+    const errorStack = criticalError?.stack || '';
+    
+    console.log(`[RECOVERY_LOG]: Attempting signal recovery for error: ${errorMsg}`);
+
     return (
-      <div className="profile-error-fallback" style={{ background: '#06080A', color: '#E8DFC8', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px', textAlign: 'center' }}>
-        <h1 style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '48px', color: '#FF4D1A' }}>SIGNAL RECOVERY MODE</h1>
-        <p style={{ color: '#6B7A8D', maxWidth: '500px', margin: '20px 0' }}>The production server encountered a rendering issue. We are currently operating in high-stability fallback mode.</p>
-        <a href="/" style={{ border: '1px solid #FF4D1A', color: '#FF4D1A', padding: '12px 24px', textDecoration: 'none', textTransform: 'uppercase', fontSize: '10px', letterSpacing: '0.2em' }}>Return Home</a>
+      <div className="profile-error-fallback" style={{ background: '#06080A', color: '#E8DFC8', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px', textAlign: 'center', position: 'relative' }}>
+        {/* Cinematic noise overlay */}
+        <div style={{ position: 'absolute', inset: 0, opacity: 0.05, pointerEvents: 'none', background: 'repeating-linear-gradient(0deg, #000, #000 1px, transparent 1px, transparent 2px)', backgroundSize: '100% 2px' }}></div>
+        
+        <h1 style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '48px', color: '#FF4D1A', marginBottom: '10px', letterSpacing: '4px' }}>SIGNAL RECOVERY MODE</h1>
+        <div style={{ width: '60px', height: '2px', background: '#FF4D1A', marginBottom: '30px' }}></div>
+        
+        <p style={{ color: '#6B7A8D', maxWidth: '500px', margin: '0 0 20px 0', fontSize: '13px', lineHeight: '1.6', letterSpacing: '1px' }}>
+          The production server encountered a rendering issue while decrypting this profile. 
+          We are currently operating in high-stability fallback mode.
+        </p>
+        
+        {process.env.NODE_ENV === 'development' && (
+          <div style={{ background: 'rgba(255, 77, 26, 0.05)', border: '1px solid rgba(255, 77, 26, 0.2)', padding: '15px', marginBottom: '30px', fontSize: '10px', color: '#FF4D1A', textAlign: 'left', maxWidth: '80%', overflow: 'auto', fontFamily: 'monospace' }}>
+            {errorMsg}
+          </div>
+        )}
+
+        <div style={{ display: 'flex', gap: '20px' }}>
+          <a href="/" style={{ border: '1px solid #FF4D1A', color: '#FF4D1A', padding: '12px 24px', textDecoration: 'none', textTransform: 'uppercase', fontSize: '10px', letterSpacing: '0.2em', transition: 'all 0.3s ease' }}>Return Home</a>
+          <button onClick={() => window.location.reload()} style={{ background: '#FF4D1A', color: '#06080A', border: 'none', padding: '12px 24px', textTransform: 'uppercase', fontSize: '10px', letterSpacing: '0.2em', cursor: 'pointer', fontWeight: 'bold' }}>Retry Uplink</button>
+        </div>
+        
+        <div style={{ marginTop: '40px', fontSize: '8px', color: '#333', letterSpacing: '3px' }}>
+          NEXUS SIGNAL ERROR CODE: {criticalError?.digest || 'UNKNOWN_FRAGMENT'}
+        </div>
       </div>
     );
   }

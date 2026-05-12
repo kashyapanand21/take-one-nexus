@@ -867,7 +867,7 @@ export default function ChatPage() {
                           </div>
                         )}
                         <div className="details-actions">
-                          <button className="details-btn" onClick={() => window.location.href = `/profile/${activeRecipient?.id}`}>View Profile</button>
+                          <button className="details-btn" onClick={() => window.location.href = `/profile?id=${activeRecipient?.id}`}>View Profile</button>
                           <button className="details-btn danger" onClick={() => handleDeleteConversation(activeConv.id)}>Delete History</button>
                         </div>
                       </div>
