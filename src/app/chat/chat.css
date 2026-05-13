@@ -1624,3 +1624,50 @@ nav a:hover::after { width: 100%; }
   gap: 8px;
   align-items: center;
 }
+
+/* Message Status Styles */
+.message-bubble.sending {
+  opacity: 0.7;
+}
+
+.message-bubble.error .msg-content {
+  border: 1px solid rgba(255, 77, 26, 0.3);
+  box-shadow: 0 0 10px rgba(255, 77, 26, 0.1);
+}
+
+.msg-status-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 8px;
+  font-size: 10px;
+  font-family: 'Space Mono', monospace;
+  vertical-align: middle;
+}
+
+.msg-status-icon.sending {
+  color: var(--neon);
+  animation: pulse-opacity 1.5s infinite;
+}
+
+.msg-status-icon.error {
+  color: var(--amber);
+  background: rgba(255, 77, 26, 0.1);
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 1px solid var(--amber);
+  font-weight: bold;
+}
+
+.msg-status-icon.error:hover {
+  background: var(--amber);
+  color: var(--void);
+}
+
+@keyframes pulse-opacity {
+  0% { opacity: 0.4; }
+  50% { opacity: 1; }
+  100% { opacity: 0.4; }
+}

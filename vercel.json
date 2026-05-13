@@ -22,10 +22,6 @@
   ],
   "routes": [
     {
-      "src": "/",
-      "dest": "/project.htm"
-    },
-    {
       "src": "/api/(.*)",
       "dest": "server.js"
     },
@@ -35,7 +31,18 @@
     },
     {
       "src": "/project",
-      "dest": "/"
+      "dest": "/project.htm"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/",
+      "dest": "/project.htm"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
     }
   ]
 }

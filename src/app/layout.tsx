@@ -61,12 +61,15 @@ export default function RootLayout({
         <link rel="stylesheet" href="/styles/components/global-chat-fab.css" />
       </head>
       <body className={`${spaceMono.className}`}>
+        <div className="cur-dot" id="dot"></div>
+        <div className="cur-cross" id="cross"></div>
         <div className="scroll-progress" id="scrollProgress"></div>
         {children}
         <GlobalIssueReporter />
         <Script src="/scripts/constants/roles.js" strategy="beforeInteractive" />
         <Script src="/scripts/api/api.js" strategy="afterInteractive" />
         <Script src="/scripts/utils/helpers.js" strategy="afterInteractive" />
+        <Script src="/scripts/animations/common.js" strategy="afterInteractive" />
         <Script src="/scripts/components/modal.js" strategy="afterInteractive" />
         <Script src="/scripts/components/global-chat-fab.js" strategy="afterInteractive" />
       </body>

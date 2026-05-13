@@ -32,12 +32,13 @@ interface User {
 
 
 interface ChatMessage {
-  id: number;
+  id: number | string; // Support temporary string IDs for optimistic updates
   conversation_id: number;
   sender_id: number;
   content: string;
   created_at: string;
   sender: User;
+  status?: 'sending' | 'error' | 'sent';
 }
 
 interface Conversation {
@@ -121,6 +122,16 @@ export default function ChatPage() {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
+    messagesEndRef.current?.scrollIntoView({ behavior });
+  };
+
+  useEffect(() => {
+    if (activeTab === 'chat' && !messageLoading) {
+      scrollToBottom('auto');
+    }
+  }, [messages, activeTab, messageLoading]);
   const pusherRef = useRef<Pusher | null>(null);
   const pusherConfigRef = useRef<{key: string, cluster: string} | null>(null);
   const typingTimeoutRef = useRef<{[key: number]: NodeJS.Timeout}>({});
@@ -303,7 +314,8 @@ export default function ChatPage() {
 
   const loadMoreMessages = useCallback(() => {
     if (hasMore && !isLoadingMore && activeConv && messages.length > 0) {
-      fetchMessages(activeConv.id, messages[0].id);
+      const oldestId = typeof messages[0].id === 'number' ? messages[0].id : null;
+      if (oldestId) fetchMessages(activeConv.id, oldestId);
     }
   }, [hasMore, isLoadingMore, activeConv, messages, fetchMessages]);
 
@@ -748,12 +760,24 @@ export default function ChatPage() {
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !activeConv || sending) return;
+    if (!newMessage.trim() || !activeConv || sending || !user) return;
 
     const content = newMessage.trim();
-    setNewMessage('');
-    setSending(true);
+    const tempId = `temp-${Date.now()}`;
+    
+    const optimisticMessage: ChatMessage = {
+      id: tempId,
+      conversation_id: activeConv.id,
+      sender_id: user.id,
+      content,
+      created_at: new Date().toISOString(),
+      sender: user,
+      status: 'sending'
+    };
 
+    setNewMessage('');
+    setMessages(prev => [...prev, optimisticMessage]);
+    
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('take_one_token') : null;
       const res = await fetch('/api/chat/messages', {
@@ -777,15 +801,14 @@ export default function ChatPage() {
       const json = await res.json();
 
       if (!res.ok || !json.success) {
+        setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: 'error' } : m));
         setStatusText(json.message || 'Message could not be sent.');
-        setNewMessage(content);
         return;
       }
 
-      setMessages((prev) => {
-        if (!json.data || prev.find((message) => message.id === json.data.id)) return prev;
-        return [...prev, json.data];
-      });
+      // Replace optimistic message with actual message from server
+      setMessages(prev => prev.map(m => m.id === tempId ? { ...json.data, status: 'sent' } : m));
+      
       setConversations((current) => {
         const index = current.findIndex(c => c.id === json.data.conversation_id);
         if (index === -1) return current;
@@ -797,10 +820,8 @@ export default function ChatPage() {
       setTimeout(() => inputRef.current?.focus(), 100);
     } catch (err) {
       console.error('Failed to send message', err);
-      setStatusText('Message could not be sent.');
-      setNewMessage(content);
-    } finally {
-      setSending(false);
+      setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: 'error' } : m));
+      setStatusText('Connection lost. Message failed to send.');
     }
   };
 
@@ -813,7 +834,7 @@ export default function ChatPage() {
         <nav>
           <a href="/#explore">Explore</a>
           <a href="/crew.htm">Crew</a>
-          <a href="/leaderboard.htm">Leaderboard</a>
+          <a href="/leaderboard">Leaderboard</a>
           <a href="/#upload">Upload</a>
           <a href="/profile">Profile</a>
           {user?.role && ['admin', 'developer', 'moderator'].includes(user.role.toLowerCase()) && (
@@ -1085,9 +1106,18 @@ export default function ChatPage() {
                               </span>
                             </div>
                             {dateMsgs.map((msg) => (
-                              <div key={msg.id} className={`message-bubble ${msg.sender_id === user?.id ? 'sent' : 'received'}`}>
+                              <div key={msg.id} className={`message-bubble ${msg.sender_id === user?.id ? 'sent' : 'received'} ${msg.status || ''}`}>
                                 {activeConv?.is_group && msg.sender_id !== user?.id && <div className="msg-sender-name">{getDisplayName(msg.sender)}</div>}
-                                <div className="msg-content">{msg.content}</div>
+                                <div className="msg-content">
+                                  {msg.content}
+                                  {msg.status === 'sending' && <span className="msg-status-icon sending">...</span>}
+                                  {msg.status === 'error' && (
+                                    <span className="msg-status-icon error" title="Failed to send. Click to retry." onClick={() => {
+                                      setNewMessage(msg.content);
+                                      setMessages(prev => prev.filter(m => m.id !== msg.id));
+                                    }}>!</span>
+                                  )}
+                                </div>
                                 <small className="msg-time">{new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</small>
                               </div>
                             ))}

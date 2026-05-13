@@ -71,7 +71,7 @@ export default async function ProfilePage({
             <h1>Creator Not Found</h1>
             <p>The transmission signal for this creator ID has been terminated or never existed.</p>
             <div className="auth-actions">
-              <a href="/crew.htm" className="auth-primary">Browse Crew</a>
+              <a href="/crew" className="auth-primary">Browse Crew</a>
               <a href="/" className="auth-secondary">Back to Nexus</a>
             </div>
           </div>
@@ -122,8 +122,7 @@ export default async function ProfilePage({
 
     return (
       <>
-        {/* ── CUSTOM CURSOR ── */}
-        <div className="cur-dot" id="dot"></div>
+        {/* ── TOAST NOTIFICATION ── */}
 
         {/* ── TOAST NOTIFICATION ── */}
         <div id="toast">Profile saved ✦</div>
@@ -134,8 +133,8 @@ export default async function ProfilePage({
           <nav>
             <a href="/">Home</a>
             <a href="/#explore">Explore</a>
-            <a href="/crew.htm">Crew</a>
-            <a href="/leaderboard.htm">Leaderboard</a>
+            <a href="/crew">Crew</a>
+            <a href="/leaderboard">Leaderboard</a>
             <a href="/chat" className="nav-chat-link">Messages</a>
             {isOwner && <button className="profile-logout" id="profileLogoutBtn" type="button">Logout</button>}
           </nav>

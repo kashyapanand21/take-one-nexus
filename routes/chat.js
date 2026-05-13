@@ -380,10 +380,11 @@ router.post('/messages', authenticateUser, async (req, res) => {
       });
 
       if (!conversation) {
+        console.error('[CHAT_API] Access denied to conversation:', conversationId, 'for user:', senderId);
         return res.status(403).json({ success: false, message: 'Access denied' });
       }
 
-      if (!conversation.is_group && conversation.users.length < 2) {
+      if (!conversation.is_group && conversation.members.length < 2) {
         return res.status(400).json({ success: false, message: 'This user is no longer available.' });
       }
 
@@ -466,8 +467,13 @@ router.post('/messages', authenticateUser, async (req, res) => {
 
     // Trigger Pusher event
     if (process.env.PUSHER_APP_ID) {
+      console.log(`[CHAT_API] Triggering Pusher event for conversation-${targetConversationId}`);
       pusher.trigger(`conversation-${targetConversationId}`, 'new-message', {
-        message
+        ...message,
+        sender: {
+          ...message.sender,
+          name: formatDisplayName(message.sender?.name)
+        }
       });
       
       // Also notify recipient's personal channel for unread indicators/sidebar updates
@@ -477,6 +483,8 @@ router.post('/messages', authenticateUser, async (req, res) => {
           message
         });
       }
+    } else {
+      console.warn('[CHAT_API] Pusher not configured, skipping event trigger');
     }
 
     res.json({

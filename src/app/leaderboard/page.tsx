@@ -50,7 +50,7 @@ export default async function LeaderboardPage() {
         <a href="/" className="logo">TAKE <span>ONE</span></a>
         <nav>
           <a href="/#explore">Explore</a>
-          <a href="/crew.htm">Crew</a>
+          <a href="/crew">Crew</a>
           <a href="/leaderboard" className="active">Leaderboard</a>
           <a href="/#upload">Upload</a>
           <a href="/profile">Profile</a>

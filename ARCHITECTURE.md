@@ -13,6 +13,7 @@ The system is composed of three primary layers:
 - **Core Role**: Handles authenticated user experiences, real-time dashboards, and cinematic profiles.
 - **Key Technologies**: React Server Components, Client Components, Framer Motion (for animations).
 - **Communication**: Communicates with the Backend layer via standard REST APIs.
+- **Optimistic UI**: Employs client-side optimistic updates for real-time messaging, ensuring instantaneous feedback.
 
 ### 2. API & Legacy Layer (Express.js)
 - **Location**: `server.js` and `routes/`
@@ -60,7 +61,7 @@ The platform uses **Pusher** for event-driven updates:
 ├── public/             # Static Assets & Vanilla JS
 ├── middleware/         # Auth Guard & Security Layers
 ├── server.js           # Hybrid Server Entry Point
-└── vercel.json         # Routing & Deployment Configuration
+└── vercel.json         # Unified Routing (Next.js + Express Proxy)
 ```
 
 ---

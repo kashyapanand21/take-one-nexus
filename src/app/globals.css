@@ -80,3 +80,34 @@ body::after {
   box-shadow: 0 0 18px rgba(255, 77, 26, 0.55);
   pointer-events: none;
 }
+
+/* ── CUSTOM CURSOR ── */
+.cur-dot {
+  width: 6px; height: 6px;
+  background: var(--neon);
+  border-radius: 50%;
+  position: fixed; pointer-events: none; z-index: 10000;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 8px var(--neon), 0 0 16px var(--neon);
+}
+.cur-cross {
+  width: 28px; height: 28px;
+  position: fixed; pointer-events: none; z-index: 9999;
+  transform: translate(-50%, -50%);
+  transition: all 0.1s ease-out;
+}
+.cur-cross::before,
+.cur-cross::after {
+  content: '';
+  position: absolute;
+  background: var(--cyan);
+  opacity: 0.7;
+}
+.cur-cross::before { width: 1px; height: 100%; left: 50%; top: 0; }
+.cur-cross::after  { width: 100%; height: 1px; top: 50%; left: 0; }
+
+@media (max-width: 1024px) {
+  .cur-dot, .cur-cross {
+    display: none;
+  }
+}
