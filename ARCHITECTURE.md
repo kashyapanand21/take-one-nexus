@@ -53,9 +53,9 @@ The Express backend acts as the core API layer. On Vercel, it compiles down to a
 **Route Domains (`routes/`):**
 - `/api/users`: Auth (Register, Login, JWT verification), Profile CRUD.
 - `/api/scripts`: Portfolio/Project CRUD and search algorithms.
-- `/api/chat`: Conversation creation and message history retrieval.
-- `/api/requests`: Collaboration request state machine.
-- `/api/system`: Health checks and admin analytics.
+- **`/api/chat`**: Conversation creation, role management, and history retrieval.
+- **`/api/tasks`**: Mission CRUD and role-based assignment tracking.
+- **`/api/requests`**: Collaboration request state machine.
 
 ---
 
@@ -66,7 +66,8 @@ We use **MySQL** optimized for TiDB Cloud, managed entirely through **Prisma ORM
 ### Core Models (`prisma/schema.prisma`)
 - **`User`**: Identity, credentials, creative roles, and earned credits.
 - **`Script`**: The "Work" or "Portfolio" item. Holds `role_data` (JSON) allowing dynamic fields based on the creator's role.
-- **`Conversation` & `Message`**: Relational tables handling both 1-to-1 DMs and Group Chats.
+- **`Conversation` & `ConversationMember`**: Relational structure supporting production roles (Director, Admin, Member) via an explicit junction table.
+- **`Task`**: Tracking system for project "missions" with status (Todo, In Progress, Review, Done) and priority weighting.
 - **`CollaborationRequest`**: A state-machine table tracking the status (Pending, Accepted, Rejected) of project invites.
 
 ---
@@ -88,9 +89,9 @@ TAKE ONE Nexus uses **Pusher** to offload WebSocket connection management.
 
 1. **Initialization:** When a user opens `/chat`, the frontend fetches historical messages via `GET /api/chat/messages/:id`.
 2. **Subscription:** The client subscribes to a private Pusher channel: `private-conversation-<id>`.
-3. **Dispatch:** User sends a message via `POST /api/chat/messages`.
-4. **Broadcast:** The Express backend saves the message to MySQL, then triggers a Pusher event.
-5. **Receive:** Connected clients receive the event and append the message to the UI instantly.
+3. **Dispatch**: User sends a message or task update via dedicated POST/PATCH endpoints.
+4. **Broadcast**: The Express backend saves the record to MySQL, then triggers a Pusher event (e.g., `new-message` or `task-update`).
+5. **Receive**: Connected clients receive the event and re-render appropriate UI segments (Transmission vs. Mission tabs).
 
 ---
 

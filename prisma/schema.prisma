@@ -32,7 +32,7 @@ model User {
   sent_messages       Message[]              @relation("SentMessages")
   notifications       notifications[]
   scripts             Script[]
-  conversations       Conversation[]         @relation("UserConversations")
+  memberships         ConversationMember[]
 
   @@map("users")
 }
@@ -79,16 +79,47 @@ model CollaborationRequest {
 }
 
 model Conversation {
-  id         Int       @id @default(autoincrement()) @db.UnsignedInt
-  created_at DateTime  @default(now()) @db.Timestamp(0)
-  updated_at DateTime  @default(now()) @updatedAt @db.Timestamp(0)
-  avatar_url String?   @db.VarChar(255)
-  is_group   Boolean   @default(false)
-  name       String?   @db.VarChar(255)
+  id         Int                  @id @default(autoincrement()) @db.UnsignedInt
+  created_at DateTime             @default(now()) @db.Timestamp(0)
+  updated_at DateTime             @default(now()) @updatedAt @db.Timestamp(0)
+  avatar_url String?              @db.VarChar(255)
+  is_group   Boolean              @default(false)
+  name       String?              @db.VarChar(255)
   messages   Message[]
-  users      User[]    @relation("UserConversations")
+  members    ConversationMember[]
+  tasks      Task[]
 
   @@map("conversations")
+}
+
+model ConversationMember {
+  id              Int          @id @default(autoincrement()) @db.UnsignedInt
+  conversation_id Int          @db.UnsignedInt
+  user_id         Int          @db.UnsignedInt
+  role            String       @default("Member") @db.VarChar(50)
+  joined_at       DateTime     @default(now()) @db.Timestamp(0)
+  conversation    Conversation @relation(fields: [conversation_id], references: [id], onDelete: Cascade)
+  user            User         @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([conversation_id, user_id])
+  @@map("conversation_members")
+}
+
+model Task {
+  id              Int          @id @default(autoincrement()) @db.UnsignedInt
+  conversation_id Int          @db.UnsignedInt
+  creator_id      Int          @db.UnsignedInt
+  assignee_id     Int?         @db.UnsignedInt
+  title           String       @db.VarChar(255)
+  description     String?      @db.Text
+  status          String       @default("Pending") @db.VarChar(50)
+  priority        String       @default("Medium") @db.VarChar(50)
+  due_date        DateTime?    @db.Timestamp(0)
+  created_at      DateTime     @default(now()) @db.Timestamp(0)
+  updated_at      DateTime     @default(now()) @updatedAt @db.Timestamp(0)
+  conversation    Conversation @relation(fields: [conversation_id], references: [id], onDelete: Cascade)
+
+  @@map("tasks")
 }
 
 model Issue {

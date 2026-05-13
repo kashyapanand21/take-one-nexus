@@ -13,3 +13,14 @@ export function formatDisplayName(name: string | null | undefined): string {
     })
     .join(' ');
 }
+
+export function getCanonicalDisplayName(user: any): string {
+  if (!user) return 'Unnamed Creator';
+  const name = user.name || 'Anonymous Creator';
+  const screenName = user.screen_name || '';
+  const preference = user.display_preference || 'Real Name Only';
+  
+  if (preference === 'Screen Name Only' && screenName) return screenName;
+  if (preference === 'Both' && screenName) return `${name} • ${screenName}`;
+  return name;
+}

@@ -13,6 +13,7 @@ const notificationRoutes = require('./routes/notifications');
 const systemRoutes = require('./routes/system');
 const moderationRoutes = require('./routes/moderation');
 const chatRoutes = require('./routes/chat');
+const tasksRoutes = require('./routes/tasks');
 const issuesRoutes = require('./routes/issues');
 
 const app = express();
@@ -66,6 +67,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/system', systemRoutes);
 app.use('/api/moderation', moderationRoutes);
 app.use('/api/chat', chatRoutes);
+app.use('/api/tasks', tasksRoutes);
 app.use('/api/issues', issuesRoutes);
 
 app.get('/api/health', async (req, res) => {

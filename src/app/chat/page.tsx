@@ -5,6 +5,7 @@ import Pusher from 'pusher-js';
 import { getAvatarUrl } from '@/lib/avatars';
 import { format } from 'date-fns';
 import CreateGroupModal from '@/components/CreateGroupModal';
+import TaskModal from '@/components/TaskModal';
 import './chat.css';
 
 // ── SKELETON COMPONENT ──
@@ -26,6 +27,7 @@ interface User {
   skills?: string;
   credits?: number;
   created_at?: string;
+  role_in_group?: 'Director' | 'Admin' | 'Member';
 }
 
 
@@ -47,6 +49,19 @@ interface Conversation {
   messages: ChatMessage[];
   unread?: number;
   updated_at?: string;
+  my_role?: 'Director' | 'Admin' | 'Member';
+}
+
+interface Task {
+  id: number;
+  title: string;
+  description?: string;
+  status: 'Todo' | 'In Progress' | 'Review' | 'Done';
+  priority: 'Low' | 'Medium' | 'High' | 'Critical';
+  assignee_id?: number;
+  creator_id: number;
+  due_date?: string;
+  created_at: string;
 }
 
 type ChatState = 'loading' | 'ready' | 'error' | 'not-found';
@@ -73,6 +88,12 @@ export default function ChatPage() {
   const [isMuted, setIsMuted] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  // Task states
+  const [activeTab, setActiveTab] = useState<'chat' | 'tasks'>('chat');
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [tasksLoading, setTasksLoading] = useState(false);
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
 
   // Group messages by date
   const groupMessagesByDate = (msgs: ChatMessage[]) => {
@@ -131,6 +152,8 @@ export default function ChatPage() {
   const setActiveConversation = useCallback((conversation: Conversation, updateUrl = true) => {
     setActiveConv(conversation);
     setMessages([]);
+    setTasks([]);
+    setActiveTab('chat');
     localStorage.setItem('take_one_last_conversation', String(conversation.id));
 
     // Clear unread for this conversation locally
@@ -183,6 +206,77 @@ export default function ChatPage() {
     } finally {
       setMessageLoading(false);
       setIsLoadingMore(false);
+    }
+  }, []);
+
+  const fetchTasks = useCallback(async (convId: number) => {
+    setTasksLoading(true);
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('take_one_token') : null;
+      const res = await fetch(`/api/tasks/${convId}`, {
+        credentials: 'include',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      });
+      const json = await res.json();
+      if (json.success) {
+        setTasks(json.data || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch tasks', err);
+    } finally {
+      setTasksLoading(false);
+    }
+  }, []);
+
+  const createTask = useCallback(async (taskData: any) => {
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('take_one_token') : null;
+      const res = await fetch('/api/tasks', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify(taskData)
+      });
+      const json = await res.json();
+      if (!json.success) {
+        alert(json.message || 'Mission failed: Could not assign task.');
+      }
+    } catch (err) {
+      console.error('Failed to create task', err);
+    }
+  }, []);
+
+  const updateTaskStatus = useCallback(async (taskId: number, status: string) => {
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('take_one_token') : null;
+      await fetch(`/api/tasks/${taskId}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({ status })
+      });
+    } catch (err) {
+      console.error('Failed to update task status', err);
+    }
+  }, []);
+
+  const deleteTask = useCallback(async (taskId: number) => {
+    if (!confirm('Are you sure you want to abort this mission?')) return;
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('take_one_token') : null;
+      await fetch(`/api/tasks/${taskId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      });
+    } catch (err) {
+      console.error('Failed to delete task', err);
     }
   }, []);
 
@@ -575,6 +669,16 @@ export default function ChatPage() {
       });
     });
 
+    channel.bind('task-update', (data: { type: string, task: Task, taskId?: number }) => {
+      if (data.type === 'TASK_CREATED') {
+        setTasks(prev => [data.task, ...prev]);
+      } else if (data.type === 'TASK_UPDATED') {
+        setTasks(prev => prev.map(t => t.id === data.task.id ? data.task : t));
+      } else if (data.type === 'TASK_DELETED') {
+        setTasks(prev => prev.filter(t => t.id !== data.taskId));
+      }
+    });
+
     return () => {
       channel.unbind_all();
       pusherRef.current?.unsubscribe(channelName);
@@ -781,9 +885,9 @@ export default function ChatPage() {
                     />
                     {!activeConv.is_group && <span className="presence-dot online"></span>}
                   </div>
-                  <div className="header-info" onClick={() => setShowDetails(!showDetails)} style={{ cursor: 'pointer' }}>
+                  <div className="header-info">
                     <div className="header-primary-row">
-                      <h3 className="header-display-name">
+                      <h3 className="header-display-name" onClick={() => setShowDetails(!showDetails)} style={{ cursor: 'pointer' }}>
                         {activeConv?.is_group ? activeConv.name : getDisplayName(activeRecipient)}
                       </h3>
                       {!activeConv.is_group && activeRecipient?.role && (
@@ -792,31 +896,26 @@ export default function ChatPage() {
                     </div>
                     
                     <div className="header-secondary-row">
-                      {activeConv.is_group ? (
-                        <div className="group-meta">
-                          <span className="member-count">{activeConv.users.length} members</span>
-
-                          <div className="members-preview">
-                            {activeConv.users.slice(0, 3).map((u, i) => (
-                              <img 
-                                key={u.id} 
-                                src={getAvatarUrl(u.name, u.gender || 'Other', u.avatar_url)} 
-                                alt="" 
-                                className="mini-avatar"
-                                style={{ zIndex: 10 - i, marginLeft: i > 0 ? '-8px' : '0' }}
-                                loading="lazy" decoding="async"
-                              />
-                            ))}
-                            {activeConv.users.length > 3 && <span className="more-members">+{activeConv.users.length - 3}</span>}
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="presence-info">
-                          <span className="status-text">Signal Live</span>
-                          <span className="separator">•</span>
-                          <span className="last-active">Last active: recently</span>
-                        </div>
-                      )}
+                      <div className="chat-tabs">
+                        <button 
+                          className={`chat-tab ${activeTab === 'chat' ? 'active' : ''}`}
+                          onClick={() => setActiveTab('chat')}
+                        >
+                          Transmission
+                        </button>
+                        <button 
+                          className={`chat-tab ${activeTab === 'tasks' ? 'active' : ''}`}
+                          onClick={() => {
+                            setActiveTab('tasks');
+                            if (tasks.length === 0) fetchTasks(activeConv.id);
+                          }}
+                        >
+                          Tasks
+                          {tasks.filter(t => t.status !== 'Done').length > 0 && (
+                            <span className="tab-badge">{tasks.filter(t => t.status !== 'Done').length}</span>
+                          )}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -913,62 +1012,138 @@ export default function ChatPage() {
                   </div>
                 )}
 
-                {messageLoading ? (
-                  <div className="message-state">
-                    <div className="skeleton-loader">
-                      <div className="skeleton-item sent"></div>
-                      <div className="skeleton-item received"></div>
-                      <div className="skeleton-item sent"></div>
-                    </div>
-                    <span>Synchronizing Message History...</span>
-                  </div>
-                ) : messages.length === 0 ? (
-                  <div className="message-state">No messages yet. Start the conversation.</div>
-                ) : (
+                {activeTab === 'chat' ? (
                   <>
-                    {hasMore && (
-                      <div style={{ textAlign: 'center', padding: '12px 0' }}>
-                        <button
-                          onClick={loadMoreMessages}
-                          disabled={isLoadingMore}
-                          style={{
-                            background: 'transparent',
-                            border: '1px solid rgba(255,255,255,0.1)',
-                            color: 'rgba(255,255,255,0.5)',
-                            fontFamily: "'Space Mono', monospace",
-                            fontSize: '10px',
-                            letterSpacing: '0.2em',
-                            padding: '8px 20px',
-                            cursor: isLoadingMore ? 'not-allowed' : 'pointer',
-                            textTransform: 'uppercase',
-                            transition: 'all 0.3s ease'
-                          }}
-                        >
-                          {isLoadingMore ? 'Loading...' : '↑ Load Earlier Messages'}
-                        </button>
-                      </div>
-                    )}
-                    {Object.entries(groupMessagesByDate(
-                      messages.filter(msg => (msg.content || '').toLowerCase().includes(chatSearchQuery.toLowerCase()))
-                    )).map(([dateStr, dateMsgs]) => (
-                      <div key={dateStr} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                        <div className="date-separator-wrap">
-                          <span>
-                            {getFriendlyDate(dateStr)}
-                          </span>
+                    {messageLoading ? (
+                      <div className="message-state">
+                        <div className="skeleton-loader">
+                          <div className="skeleton-item sent"></div>
+                          <div className="skeleton-item received"></div>
+                          <div className="skeleton-item sent"></div>
                         </div>
-                        {dateMsgs.map((msg) => (
-                          <div key={msg.id} className={`message-bubble ${msg.sender_id === user?.id ? 'sent' : 'received'}`}>
-                            {activeConv?.is_group && msg.sender_id !== user?.id && <div className="msg-sender-name">{getDisplayName(msg.sender)}</div>}
-                            <div className="msg-content">{msg.content}</div>
-                            <small className="msg-time">{new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</small>
+                        <span>Synchronizing Message History...</span>
+                      </div>
+                    ) : messages.length === 0 ? (
+                      <div className="message-state">No messages yet. Start the conversation.</div>
+                    ) : (
+                      <>
+                        {hasMore && (
+                          <div style={{ textAlign: 'center', padding: '12px 0' }}>
+                            <button
+                              onClick={loadMoreMessages}
+                              disabled={isLoadingMore}
+                              style={{
+                                background: 'transparent',
+                                border: '1px solid rgba(255,255,255,0.1)',
+                                color: 'rgba(255,255,255,0.5)',
+                                fontFamily: "'Space Mono', monospace",
+                                fontSize: '10px',
+                                letterSpacing: '0.2em',
+                                padding: '8px 20px',
+                                cursor: isLoadingMore ? 'not-allowed' : 'pointer',
+                                textTransform: 'uppercase',
+                                transition: 'all 0.3s ease'
+                              }}
+                            >
+                              {isLoadingMore ? 'Loading...' : '↑ Load Earlier Messages'}
+                            </button>
+                          </div>
+                        )}
+                        {Object.entries(groupMessagesByDate(
+                          messages.filter(msg => (msg.content || '').toLowerCase().includes(chatSearchQuery.toLowerCase()))
+                        )).map(([dateStr, dateMsgs]) => (
+                          <div key={dateStr} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                            <div className="date-separator-wrap">
+                              <span>
+                                {getFriendlyDate(dateStr)}
+                              </span>
+                            </div>
+                            {dateMsgs.map((msg) => (
+                              <div key={msg.id} className={`message-bubble ${msg.sender_id === user?.id ? 'sent' : 'received'}`}>
+                                {activeConv?.is_group && msg.sender_id !== user?.id && <div className="msg-sender-name">{getDisplayName(msg.sender)}</div>}
+                                <div className="msg-content">{msg.content}</div>
+                                <small className="msg-time">{new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</small>
+                              </div>
+                            ))}
                           </div>
                         ))}
-                      </div>
-                    ))}
+                      </>
+                    )}
                   </>
+                ) : (
+                  <div className="tasks-area">
+                    <div className="tasks-header">
+                      <h3>Active Missions</h3>
+                      <button onClick={() => setIsTaskModalOpen(true)} className="add-task-btn">Assign Task +</button>
+                    </div>
+                    {tasksLoading ? (
+                      <div className="message-state">Accessing mission records...</div>
+                    ) : tasks.length === 0 ? (
+                      <div className="message-state">No missions assigned yet.</div>
+                    ) : (
+                      <div className="tasks-list">
+                        {tasks.map(task => {
+                          const assignee = activeConv?.users.find(u => u.id === task.assignee_id);
+                          const isLead = activeConv?.my_role === 'Director' || activeConv?.my_role === 'Admin';
+                          const isAssignee = task.assignee_id === user?.id;
+
+                          return (
+                            <div key={task.id} className={`task-card priority-${task.priority.toLowerCase()}`}>
+                              <div className="task-main">
+                                <div className="task-top-row">
+                                  <div className="task-title">{task.title}</div>
+                                  {isLead && (
+                                    <button onClick={() => deleteTask(task.id)} className="task-delete-btn" title="Abort Mission">
+                                      <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2" fill="none"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                                    </button>
+                                  )}
+                                </div>
+                                
+                                {task.description && <div className="task-desc">{task.description}</div>}
+                                
+                                <div className="task-assignee">
+                                  <label>Assigned Operative</label>
+                                  <div className="assignee-val">
+                                    {assignee ? (
+                                      <>
+                                        <img src={getAvatarUrl(assignee.name, assignee.gender || 'Other', assignee.avatar_url)} alt="" className="mini-avatar" />
+                                        <span>{assignee.name}</span>
+                                      </>
+                                    ) : (
+                                      <span className="unassigned">Field Operative Required</span>
+                                    )}
+                                  </div>
+                                </div>
+
+                                <div className="task-meta">
+                                  <div className="task-status-wrap">
+                                    {isLead || isAssignee ? (
+                                      <select 
+                                        value={task.status} 
+                                        onChange={(e) => updateTaskStatus(task.id, e.target.value)}
+                                        className={`status-select status-${task.status.toLowerCase().replace(' ', '')}`}
+                                      >
+                                        <option value="Todo">Todo</option>
+                                        <option value="In Progress">In Progress</option>
+                                        <option value="Review">Review</option>
+                                        <option value="Done">Done</option>
+                                      </select>
+                                    ) : (
+                                      <span className={`task-status status-${task.status.toLowerCase().replace(' ', '')}`}>{task.status}</span>
+                                    )}
+                                  </div>
+                                  <span className="task-priority-tag">{task.priority}</span>
+                                  {task.due_date && <span className="task-due-tag">Deadline: {new Date(task.due_date).toLocaleDateString()}</span>}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 )}
-                {Object.keys(typingUsers).length > 0 && (
+                {Object.keys(typingUsers).length > 0 && activeTab === 'chat' && (
                   <div className="typing-indicator">
                     {Object.values(typingUsers).join(', ')} {Object.keys(typingUsers).length > 1 ? 'are' : 'is'} typing...
                   </div>
@@ -1005,7 +1180,7 @@ export default function ChatPage() {
                               <img src={getAvatarUrl(u.name, u.gender || 'Other', u.avatar_url)} alt="" className="mini-avatar" loading="lazy" decoding="async" />
                               <div className="member-info">
                                 <span className="member-name">{u.name}</span>
-                                <span className="member-role">{u.role || 'Member'}</span>
+                                <span className="member-role">{u.role_in_group || 'Member'}</span>
                               </div>
                             </div>
                           ))}
@@ -1053,23 +1228,24 @@ export default function ChatPage() {
                 </div>
               )}
 
-              <form className="chat-input-wrap" onSubmit={sendMessage}>
-
-                <div className="input-container">
-                  <input
-                    ref={inputRef}
-                    type="text"
-                    className="chat-input"
-                    placeholder={(!activeConv?.is_group && activeRecipient?.id === -1) ? 'This user is no longer available.' : `Message ${activeConv?.is_group ? activeConv.name : (activeRecipient?.name || 'crew member')}...`}
-                    value={newMessage}
-                    onChange={onInputChange}
-                    disabled={sending || (!activeConv?.is_group && activeRecipient?.id === -1)}
-                  />
-                  <button type="submit" className="send-btn" disabled={!newMessage.trim() || sending || (!activeConv?.is_group && activeRecipient?.id === -1)} aria-label="Send message">
-                    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-                  </button>
-                </div>
-              </form>
+              {activeTab === 'chat' && (
+                <form className="chat-input-wrap" onSubmit={sendMessage}>
+                  <div className="input-container">
+                    <input
+                      ref={inputRef}
+                      type="text"
+                      className="chat-input"
+                      placeholder={(!activeConv?.is_group && activeRecipient?.id === -1) ? 'This user is no longer available.' : `Message ${activeConv?.is_group ? activeConv.name : (activeRecipient?.name || 'crew member')}...`}
+                      value={newMessage}
+                      onChange={onInputChange}
+                      disabled={sending || (!activeConv?.is_group && activeRecipient?.id === -1)}
+                    />
+                    <button type="submit" className="send-btn" disabled={!newMessage.trim() || sending || (!activeConv?.is_group && activeRecipient?.id === -1)} aria-label="Send message">
+                      <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                    </button>
+                  </div>
+                </form>
+              )}
             </>
           ) : (
             <div className="chat-empty">
@@ -1095,6 +1271,13 @@ export default function ChatPage() {
         </main>
       </div>
       <CreateGroupModal isOpen={isGroupModalOpen} onClose={() => setIsGroupModalOpen(false)} onCreate={createGroupConversation} />
+      <TaskModal 
+        isOpen={isTaskModalOpen} 
+        onClose={() => setIsTaskModalOpen(false)} 
+        conversationId={activeConv?.id || 0} 
+        members={activeConv?.users || []} 
+        onCreate={createTask} 
+      />
     </div>
   );
 }

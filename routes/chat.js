@@ -18,18 +18,22 @@ const pusher = new Pusher({
 
 function getConversationInclude() {
   return {
-    users: {
-      select: {
-        id: true,
-        name: true,
-        avatar_url: true,
-        gender: true,
-        role: true,
-        college: true,
-        city: true,
-        skills: true,
-        credits: true,
-        created_at: true
+    members: {
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            avatar_url: true,
+            gender: true,
+            role: true,
+            college: true,
+            city: true,
+            skills: true,
+            credits: true,
+            created_at: true
+          }
+        }
       }
     },
     messages: {
@@ -47,7 +51,30 @@ function getConversationInclude() {
         }
       }
     }
+  };
+}
 
+function transformConversation(c, userId) {
+  const myMember = (c.members || []).find(m => m.user_id === userId);
+  return {
+    ...c,
+    my_role: myMember ? myMember.role : 'Member',
+    users: (c.members || []).map(m => ({ 
+      ...m.user, 
+      name: formatDisplayName(m.user.name),
+      role_in_group: m.role 
+    })),
+    messages: (c.messages || []).map(m => ({
+      ...m,
+      sender: m.sender ? { 
+        ...m.sender, 
+        name: formatDisplayName(m.sender.name) 
+      } : {
+        id: m.sender_id || 0,
+        name: 'Deleted User',
+        role: 'Unknown'
+      }
+    }))
   };
 }
 
@@ -66,8 +93,8 @@ router.get('/conversations', authenticateUser, async (req, res) => {
 
     const conversations = await prisma.conversation.findMany({
       where: {
-        users: {
-          some: { id: userId }
+        members: {
+          some: { user_id: userId }
         }
       },
       include: getConversationInclude(),
@@ -76,21 +103,7 @@ router.get('/conversations', authenticateUser, async (req, res) => {
 
     res.json({
       success: true,
-      data: conversations.map(c => ({
-        ...c,
-        users: (c.users || []).map(u => ({ ...u, name: formatDisplayName(u.name) })),
-        messages: (c.messages || []).map(m => ({
-          ...m,
-          sender: m.sender ? { 
-            ...m.sender, 
-            name: formatDisplayName(m.sender.name) 
-          } : {
-            id: m.sender_id || 0,
-            name: 'Deleted User',
-            role: 'Unknown'
-          }
-        }))
-      })),
+      data: conversations.map(c => transformConversation(c, userId)),
       pusherKey: process.env.NEXT_PUBLIC_PUSHER_KEY || process.env.PUSHER_KEY || '',
       pusherCluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER || process.env.PUSHER_CLUSTER || ''
     });
@@ -115,7 +128,7 @@ router.get('/unread-count', authenticateUser, async (req, res) => {
         is_read: false,
         sender_id: { not: userId },
         conversation: {
-          users: { some: { id: userId } }
+          members: { some: { user_id: userId } }
         }
       }
     });
@@ -160,30 +173,32 @@ router.post('/conversations/direct', authenticateUser, async (req, res) => {
     const candidates = await prisma.conversation.findMany({
       where: {
         AND: [
-          { users: { some: { id: senderId } } },
-          { users: { some: { id: recipientId } } }
-        ]
+          { members: { some: { user_id: senderId } } },
+          { members: { some: { user_id: recipientId } } }
+        ],
+        is_group: false
       },
       include: getConversationInclude(),
       orderBy: { updated_at: 'desc' }
     });
 
-    const existingConversation = candidates.find((conversation) => conversation.users.length === 2) || candidates[0];
+    const existingConversation = candidates.find((conversation) => conversation.members.length === 2) || candidates[0];
 
     if (existingConversation) {
       return res.json({
         success: true,
         created: false,
-        data: existingConversation
+        data: transformConversation(existingConversation, senderId)
       });
     }
 
     const conversation = await prisma.conversation.create({
       data: {
-        users: {
-          connect: [
-            { id: senderId },
-            { id: recipientId }
+        is_group: false,
+        members: {
+          create: [
+            { user_id: senderId, role: 'Member' },
+            { user_id: recipientId, role: 'Member' }
           ]
         }
       },
@@ -193,10 +208,7 @@ router.post('/conversations/direct', authenticateUser, async (req, res) => {
     res.status(201).json({
       success: true,
       created: true,
-      data: {
-        ...conversation,
-        users: conversation.users.map(u => ({ ...u, name: formatDisplayName(u.name) }))
-      }
+      data: transformConversation(conversation, senderId)
     });
   } catch (error) {
     console.error('Direct conversation error:', error.message);
@@ -223,17 +235,19 @@ router.post('/conversations/group', authenticateUser, async (req, res) => {
       data: {
         name: name,
         is_group: true,
-        users: { connect: allUserIds.map(id => ({ id })) }
+        members: {
+          create: [
+            { user_id: senderId, role: 'Director' },
+            ...userIds.map(id => ({ user_id: Number(id), role: 'Member' }))
+          ]
+        }
       },
       include: getConversationInclude()
     });
 
     res.status(201).json({
       success: true,
-      data: {
-        ...conversation,
-        users: conversation.users.map(u => ({ ...u, name: formatDisplayName(u.name) }))
-      }
+      data: transformConversation(conversation, senderId)
     });
   } catch (error) {
     console.error('Group conversation error:', error.message);
@@ -262,8 +276,8 @@ router.get('/messages/:conversationId', authenticateUser, async (req, res) => {
     const conversation = await prisma.conversation.findFirst({
       where: {
         id: conversationId,
-        users: {
-          some: { id: userId }
+        members: {
+          some: { user_id: userId }
         }
       }
     });
@@ -356,12 +370,12 @@ router.post('/messages', authenticateUser, async (req, res) => {
       const conversation = await prisma.conversation.findFirst({
         where: {
           id: Number(targetConversationId),
-          users: {
-            some: { id: senderId }
+          members: {
+            some: { user_id: senderId }
           }
         },
         include: {
-          users: { select: { id: true } }
+          members: { select: { user_id: true } }
         }
       });
 
@@ -374,7 +388,7 @@ router.post('/messages', authenticateUser, async (req, res) => {
       }
 
       targetConversationId = conversation.id;
-      targetRecipientId = conversation.users.find((member) => member.id !== senderId)?.id || null;
+      targetRecipientId = conversation.members.find((m) => m.user_id !== senderId)?.user_id || null;
     }
 
     // If no conversationId, check if a conversation already exists with recipient
@@ -395,14 +409,15 @@ router.post('/messages', authenticateUser, async (req, res) => {
       const existingConversations = await prisma.conversation.findMany({
         where: {
           AND: [
-            { users: { some: { id: senderId } } },
-            { users: { some: { id: Number(targetRecipientId) } } }
-          ]
+            { members: { some: { user_id: senderId } } },
+            { members: { some: { user_id: Number(targetRecipientId) } } }
+          ],
+          is_group: false
         },
-        include: { users: { select: { id: true } } },
+        include: { members: { select: { user_id: true } } },
         orderBy: { updated_at: 'desc' }
       });
-      const existingConversation = existingConversations.find((conversation) => conversation.users.length === 2) || existingConversations[0];
+      const existingConversation = existingConversations.find((conversation) => conversation.members.length === 2) || existingConversations[0];
 
       if (existingConversation) {
         targetConversationId = existingConversation.id;
@@ -410,10 +425,11 @@ router.post('/messages', authenticateUser, async (req, res) => {
         // Create new conversation
         const newConversation = await prisma.conversation.create({
           data: {
-            users: {
-              connect: [
-                { id: senderId },
-                { id: Number(targetRecipientId) }
+            is_group: false,
+            members: {
+              create: [
+                { user_id: senderId, role: 'Member' },
+                { user_id: Number(targetRecipientId), role: 'Member' }
               ]
             }
           }
@@ -509,13 +525,11 @@ router.delete('/conversations/:id', authenticateUser, async (req, res) => {
     const conversationId = Number(req.params.id);
     const userId = Number(req.user.id);
 
-    // Disconnect user from conversation
-    await prisma.conversation.update({
-      where: { id: conversationId },
-      data: {
-        users: {
-          disconnect: { id: userId }
-        }
+    // Delete membership
+    await prisma.conversationMember.deleteMany({
+      where: {
+        conversation_id: conversationId,
+        user_id: userId
       }
     });
 
@@ -545,13 +559,11 @@ router.post('/conversations/:id/leave', authenticateUser, async (req, res) => {
       return res.status(400).json({ success: false, message: 'Can only leave group conversations' });
     }
 
-    // Disconnect user
-    await prisma.conversation.update({
-      where: { id: conversationId },
-      data: {
-        users: {
-          disconnect: { id: userId }
-        }
+    // Delete membership
+    await prisma.conversationMember.deleteMany({
+      where: {
+        conversation_id: conversationId,
+        user_id: userId
       }
     });
 
@@ -575,7 +587,7 @@ router.post('/conversations/:id/clear', authenticateUser, async (req, res) => {
     const conversation = await prisma.conversation.findFirst({
       where: {
         id: conversationId,
-        users: { some: { id: userId } }
+        members: { some: { user_id: userId } }
       }
     });
 

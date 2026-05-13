@@ -44,8 +44,9 @@ Creators use their profile as a digital reel.
 ### 3. Real-Time Chat System
 Secure transmission for project collaboration.
 - **Powered by Pusher**: WebSockets provide instant message delivery.
-- **Direct & Group Chats**: Users can message 1-to-1 or create group production channels.
-- **Cinematic UI**: Cursor-based pagination, intelligent date-grouping ("TODAY", "YESTERDAY"), and unread message tracking.
+- **Role-Based Groups**: Production channels feature explicit roles (Director, Admin, Member) via a junction table schema.
+- **Mission Assignment**: Integrated Task Management allows Directors to assign "missions" to crew members with real-time status tracking.
+- **Cinematic UI**: Cursor-based pagination, intelligent date-grouping, and tabbed interface for Transmissions vs. Missions.
 
 ### 4. Creator Credits & Leaderboard
 The heartbeat of the Nexus economy.
@@ -72,8 +73,8 @@ The heartbeat of the Nexus economy.
 
 ### Scaling Roadmap
 As the platform grows, we plan to decouple the monolithic architecture:
-1. **Microservices Extraction**: The real-time Chat system will be extracted into an independent microservice to handle high WebSocket concurrency.
-2. **CDN Optimization**: User uploaded media (avatars, posters) currently handled locally will be migrated to AWS S3/CloudFront.
+1. **Persistent Collaboration**: Transitioning from ephemeral chat to persistent project hubs with centralized asset management.
+2. **CDN Optimization**: User uploaded media (avatars, posters) will be migrated to dedicated object storage (AWS S3/CloudFront).
 3. **Public API**: Implementing `/api/v1/` for external integrations and the upcoming mobile app.
 
 ---

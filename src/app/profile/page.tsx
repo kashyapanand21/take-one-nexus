@@ -1,6 +1,8 @@
 import React from 'react';
 import { Metadata, ResolvingMetadata } from 'next';
 import { getCurrentUser } from '@/lib/auth';
+import prisma from '@/lib/prisma';
+import { getCanonicalDisplayName } from '@/utils/formatting';
 import { USER_ROLES } from '@/lib/constants';
 import Script from 'next/script';
 import { getAvatarUrl } from '@/lib/avatars';
@@ -36,7 +38,13 @@ export async function generateMetadata(
   }
 }
 
-export default async function ProfilePage({ searchParams }: { searchParams: Promise<{ id?: string }> }) {
+export default async function ProfilePage({ 
+  params, 
+  searchParams 
+}: { 
+  params: Promise<{ id?: string }>, 
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }> 
+}) {
   try {
     const { id: targetId } = await searchParams;
     const authUser = await getCurrentUser();
@@ -44,21 +52,31 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
     let rawUser;
     let isOwner = false;
 
-    if (targetId) {
-      if (isNaN(Number(targetId))) {
-        // Invalid targetId detected, will fallback to own profile
-      }
-    }
-
     if (targetId && !isNaN(Number(targetId)) && authUser?.id !== Number(targetId)) {
       // Viewing someone else's public profile
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-      const res = await fetch(`${baseUrl}/api/users/public/${targetId}`, { cache: 'no-store' });
-      const json = await res.json();
-      if (!json.success) {
-        throw new Error(json.message || 'Profile not found');
+      const targetUserId = Number(targetId);
+      rawUser = await prisma.user.findUnique({
+        where: { id: targetUserId },
+        include: {
+          scripts: {
+            orderBy: { created_at: 'desc' }
+          }
+        }
+      });
+      
+      if (!rawUser) {
+        return (
+          <div className="profile-auth-gate">
+            <div className="auth-kicker">Signal Lost</div>
+            <h1>Creator Not Found</h1>
+            <p>The transmission signal for this creator ID has been terminated or never existed.</p>
+            <div className="auth-actions">
+              <a href="/crew.htm" className="auth-primary">Browse Crew</a>
+              <a href="/" className="auth-secondary">Back to Nexus</a>
+            </div>
+          </div>
+        );
       }
-      rawUser = json.data;
       isOwner = false;
     } else {
       // Viewing own profile
@@ -86,23 +104,21 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
 
     // STABILITY: Absolute defaults for all fields
     const name = user?.name || 'Creator';
-    const role = user?.role || 'Independent Filmmaker';
+    const role = user?.role || 'Director'; // Default to a valid role from USER_ROLES
     const college = user?.college || '';
     const city = user?.city || '';
     const bio = user?.bio || 'The reel is still being edited. No bio added yet.';
     const scripts = user?.scripts || [];
     const skills = user?.skills ? String(user.skills).split(',').filter(Boolean) : [];
     const avatarUrl = getAvatarUrl(name, user?.gender, user?.avatar_url);
+    const screenName = user?.screen_name || '';
+    const displayPreference = (user?.display_preference === 'Show Real Name Only' || !user?.display_preference) 
+      ? 'Real Name Only' 
+      : user.display_preference;
     
     // Display Name Logic
-    const screenName = user?.screen_name || '';
-    const displayPreference = user?.display_preference || 'Real Name Only';
-    let displayName = name;
-    if (displayPreference === 'Screen Name Only' && screenName) {
-      displayName = screenName;
-    } else if (displayPreference === 'Both' && screenName) {
-      displayName = `${name} • ${screenName}`;
-    }
+    const displayName = getCanonicalDisplayName(user);
+    const credits = user?.credits || 0;
 
     return (
       <>
@@ -479,7 +495,7 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
 
         <div style={{ display: 'flex', gap: '20px' }}>
           <a href="/" style={{ border: '1px solid #FF4D1A', color: '#FF4D1A', padding: '12px 24px', textDecoration: 'none', textTransform: 'uppercase', fontSize: '10px', letterSpacing: '0.2em', transition: 'all 0.3s ease' }}>Return Home</a>
-          <button onClick={() => window.location.reload()} style={{ background: '#FF4D1A', color: '#06080A', border: 'none', padding: '12px 24px', textTransform: 'uppercase', fontSize: '10px', letterSpacing: '0.2em', cursor: 'pointer', fontWeight: 'bold' }}>Retry Uplink</button>
+          <a href="" style={{ background: '#FF4D1A', color: '#06080A', border: 'none', padding: '12px 24px', textTransform: 'uppercase', fontSize: '10px', letterSpacing: '0.2em', cursor: 'pointer', fontWeight: 'bold', textDecoration: 'none' }}>Retry Uplink</a>
         </div>
         
         <div style={{ marginTop: '40px', fontSize: '8px', color: '#333', letterSpacing: '3px' }}>
