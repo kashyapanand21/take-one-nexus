@@ -1310,6 +1310,28 @@ registerForm?.addEventListener('submit', async (e) => {
   const existingError = registerForm.querySelector('.form-error');
   if (existingError) existingError.remove();
 
+  // Custom validation for dropdowns
+  let hasError = false;
+  
+  const validateDropdown = (id, message) => {
+    const el = document.getElementById(id);
+    if (!el || !el.value) {
+      showFieldError(id, message);
+      hasError = true;
+    } else {
+      clearFieldError(id);
+    }
+  };
+
+  validateDropdown('registerRole', 'Please select your role');
+  validateDropdown('registerDisplayPreference', 'Please select display preference');
+  validateDropdown('registerGender', 'Please select your gender');
+
+  if (hasError) {
+    showToast('❌ Missing required selections');
+    return;
+  }
+
   if (password !== confirmPassword) {
     const errorDiv = document.createElement('div');
     errorDiv.className = 'form-error';
@@ -1347,6 +1369,37 @@ registerForm?.addEventListener('submit', async (e) => {
     submitBtn.textContent = originalText;
   }
 });
+
+function showFieldError(id, message) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  
+  el.classList.add('input-invalid');
+  
+  // Check if message already exists
+  let msgEl = el.parentNode.querySelector('.validation-message');
+  if (!msgEl) {
+    msgEl = document.createElement('span');
+    msgEl.className = 'validation-message';
+    el.parentNode.appendChild(msgEl);
+  }
+  msgEl.textContent = message;
+  
+  // Auto-clear on change
+  if (!el.dataset.hasValidationListener) {
+    el.addEventListener('change', () => clearFieldError(id));
+    el.dataset.hasValidationListener = 'true';
+  }
+}
+
+function clearFieldError(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  
+  el.classList.remove('input-invalid');
+  const msgEl = el.parentNode.querySelector('.validation-message');
+  if (msgEl) msgEl.remove();
+}
 
 function updateUIAfterLogin(user) {
   if (typeof Navbar !== 'undefined') {

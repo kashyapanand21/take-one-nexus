@@ -84,6 +84,27 @@ router.post('/register', async (req, res) => {
       });
     }
 
+    if (!role || role === 'Select Role') {
+      return res.status(400).json({
+        success: false,
+        message: 'Please select a valid role'
+      });
+    }
+
+    if (!gender || gender === 'Choose Gender') {
+      return res.status(400).json({
+        success: false,
+        message: 'Please select your gender'
+      });
+    }
+
+    if (!display_preference || display_preference === 'Select Display Preference') {
+      return res.status(400).json({
+        success: false,
+        message: 'Please select a display preference'
+      });
+    }
+
     if (password.length < 6) {
       return res.status(400).json({
         success: false,

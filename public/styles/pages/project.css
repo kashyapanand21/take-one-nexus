@@ -2422,6 +2422,25 @@ footer {
   color: var(--cream);
 }
 
+.form-group input.input-invalid,
+.form-group select.input-invalid {
+  border-color: var(--neon);
+  box-shadow: 0 0 15px rgba(255, 77, 26, 0.4), 0 0 30px rgba(255, 77, 26, 0.15);
+  background: rgba(255, 77, 26, 0.08);
+  animation: shake 0.4s ease-in-out;
+}
+
+.validation-message {
+  color: var(--neon);
+  font-size: 8px;
+  margin-top: 8px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-weight: bold;
+  display: block;
+  animation: fadeUp 0.3s ease-out;
+}
+
 .form-submit {
   width: 100%;
   background: var(--neon);
