@@ -15,7 +15,7 @@ async function sendWelcomeEmail(to, name) {
 
   try {
     const { data, error } = await resend.emails.send({
-      from: 'TAKE ONE NEXUS <onboarding@resend.dev>', // Replace with your verified domain in production
+      from: 'TAKE ONE NEXUS <onboarding@takeone-nexus.net.in>', // Replace with your verified domain in production
       to: [to],
       subject: 'SIGNAL ESTABLISHED: Welcome to the Nexus, ' + name,
       html: `
