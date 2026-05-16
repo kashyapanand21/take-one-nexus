@@ -12,6 +12,12 @@ const DEVELOPER_EMAILS = [
   'alok.r25012@csds.rishihood.edu.in'
 ];
 
+/**
+ * Routes that require authentication AND email verification
+ * (messaging is gated behind verification to prevent spam)
+ */
+const VERIFIED_ONLY_ROUTES = ['/chat'];
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -44,10 +50,7 @@ export async function proxy(request: NextRequest) {
 
       // Admin route: require admin email or admin role
       if (isAdminRoute) {
-        const isAuthorized =
-          isAdminEmail ||
-          userRole === 'admin';
-
+        const isAuthorized = isAdminEmail || userRole === 'admin';
         if (!isAuthorized) {
           return NextResponse.redirect(new URL('/?error=unauthorized', request.url));
         }
@@ -63,6 +66,20 @@ export async function proxy(request: NextRequest) {
 
         if (!isAuthorized) {
           return NextResponse.redirect(new URL('/?error=unauthorized', request.url));
+        }
+      }
+
+      // Email verification gate: chat requires verified email
+      // Admin/developer emails bypass this check (always trusted)
+      const isVerifiedRoute = VERIFIED_ONLY_ROUTES.some(r => pathname.startsWith(r));
+      if (isVerifiedRoute && !isAdminEmail) {
+        const emailVerified = payload.email_verified as boolean | undefined;
+        // If field is explicitly false (not just absent), gate the route
+        // Older tokens without the field are allowed through (banner handles it)
+        if (emailVerified === false) {
+          const url = new URL('/', request.url);
+          url.searchParams.set('verify', 'required');
+          return NextResponse.redirect(url);
         }
       }
 

@@ -1,15 +1,30 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const { pool } = require('../config/db');
 const { authenticateUser, requireSameUser } = require('../middleware/auth');
 const { sendWelcomeEmail } = require('../utils/email');
 const { PrismaClient } = require('@prisma/client');
 const { formatDisplayName, getCanonicalDisplayName } = require('../utils/formatting');
 const Pusher = require('pusher');
+const { createRateLimiter } = require('../middleware/rateLimiter');
 
 const prisma = new PrismaClient();
 const router = express.Router();
+
+// Rate limiters
+const loginLimiter = createRateLimiter({
+  limit: 5,
+  windowMs: 15 * 60 * 1000,
+  keyPrefix: 'login',
+});
+
+const registerLimiter = createRateLimiter({
+  limit: 3,
+  windowMs: 60 * 60 * 1000,
+  keyPrefix: 'register',
+});
 
 // Configure Pusher
 const pusher = new Pusher({
@@ -38,7 +53,7 @@ function createToken(user) {
 
 async function getProfileData(userId) {
   const [userRows] = await pool.query(
-    `SELECT id, name, email, role, college, city, bio, skills, portfolio, avatar_url, gender, credits, screen_name, display_preference, social_links, created_at
+    `SELECT id, name, email, role, college, city, bio, skills, portfolio, avatar_url, gender, credits, screen_name, display_preference, social_links, email_verified, created_at
      FROM users
      WHERE id = ?
      LIMIT 1`,
@@ -64,7 +79,7 @@ async function getProfileData(userId) {
   };
 }
 
-router.post('/register', async (req, res) => {
+router.post('/register', registerLimiter, async (req, res) => {
   try {
     const { name, email, password, role, college, city, gender, screen_name, display_preference } = req.body;
     
@@ -196,6 +211,46 @@ router.post('/register', async (req, res) => {
       console.error('[Registration] Background email task failed:', err.message);
     });
 
+    // Send verification email asynchronously via Resend
+    (async () => {
+      try {
+        const { Resend } = require('resend');
+        const resendClient = new Resend(process.env.RESEND_API_KEY);
+        const token = crypto.randomBytes(32).toString('hex');
+        const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+        const expiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+        await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            verification_token: hashedToken,
+            verification_token_expires: expiry,
+          },
+        });
+
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://takeone-nexus.net.in';
+        const verificationUrl = `${baseUrl}/api/auth/verify-email?token=${token}`;
+
+        // Use pre-built template if available, else inline
+        let html;
+        try {
+          const { buildVerifyEmailTemplate } = require('../src/lib/email-templates/verify-email');
+          html = buildVerifyEmailTemplate({ userName: user.name, verificationUrl, expiresInHours: 24 });
+        } catch {
+          html = `<p>Hello ${user.name},</p><p>Verify your TAKE ONE account: <a href="${verificationUrl}">${verificationUrl}</a></p><p>Expires in 24 hours.</p>`;
+        }
+
+        await resendClient.emails.send({
+          from: 'TAKE ONE Nexus <noreply@takeone-nexus.net.in>',
+          to: user.email,
+          subject: '⚡ Verify your TAKE ONE account',
+          html,
+        });
+      } catch (verifyErr) {
+        console.error('[Registration] Verification email failed:', verifyErr.message);
+      }
+    })();
+
     // Trigger Pusher update for admin dashboard
     if (process.env.PUSHER_APP_ID) {
       pusher.trigger('admin-dashboard', 'update', {
@@ -250,7 +305,7 @@ router.post('/register', async (req, res) => {
 });
 
 
-router.post('/login', async (req, res) => {
+router.post('/login', loginLimiter, async (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
@@ -266,7 +321,7 @@ router.post('/login', async (req, res) => {
     let rows;
     try {
       [rows] = await pool.query(
-        `SELECT id, name, email, password, role, college, city, gender, screen_name, display_preference, social_links, credits
+        `SELECT id, name, email, password, role, college, city, gender, screen_name, display_preference, social_links, credits, email_verified
          FROM users
          WHERE email = ?
          LIMIT 1`,
@@ -321,7 +376,8 @@ router.post('/login', async (req, res) => {
         screen_name: user.screen_name || null,
         display_preference: user.display_preference || 'Show Real Name Only',
         social_links: user.social_links || null,
-        credits: user.credits || 0
+        credits: user.credits || 0,
+        email_verified: user.email_verified ?? true
       },
       token: token
     });

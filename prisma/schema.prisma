@@ -19,13 +19,19 @@ model User {
   skills              String?                @db.Text
   portfolio           String?                @db.VarChar(255)
   avatar_url          String?                @db.VarChar(255)
-  created_at          DateTime               @default(now()) @db.Timestamp(0)
-  updated_at          DateTime               @default(now()) @updatedAt @db.Timestamp(0)
-  gender              String?                @db.VarChar(20)
-  credits             Int                    @default(0) @db.UnsignedInt
-  display_preference  String?                @default("Show Real Name Only") @db.VarChar(50)
-  screen_name         String?                @db.VarChar(100)
-  social_links        String?                @db.Text
+  created_at                  DateTime               @default(now()) @db.Timestamp(0)
+  updated_at                  DateTime               @default(now()) @updatedAt @db.Timestamp(0)
+  gender                      String?                @db.VarChar(20)
+  credits                     Int                    @default(0) @db.UnsignedInt
+  display_preference          String?                @default("Show Real Name Only") @db.VarChar(50)
+  screen_name                 String?                @db.VarChar(100)
+  social_links                String?                @db.Text
+  email_verified              Boolean                @default(false)
+  email_verified_at           DateTime?              @db.Timestamp(0)
+  verification_token          String?                @unique(map: "uq_users_verification_token") @db.VarChar(255)
+  verification_token_expires  DateTime?              @db.Timestamp(0)
+  reset_token                 String?                @unique(map: "uq_users_reset_token") @db.VarChar(255)
+  reset_token_expires         DateTime?              @db.Timestamp(0)
   collaboration_owned CollaborationRequest[] @relation("OwnedRequests")
   collaboration_reqs  CollaborationRequest[] @relation("RequesterRequests")
   issues              Issue[]

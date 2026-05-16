@@ -4,6 +4,9 @@ import { Metadata, Viewport } from 'next';
 import Script from 'next/script';
 import { Space_Mono, Bebas_Neue, Cormorant_Garamond } from 'next/font/google';
 import GlobalIssueReporter from '@/components/GlobalIssueReporter';
+import CookieConsentBanner from '@/components/CookieConsentBanner';
+import PostHogProvider from '@/components/PostHogProvider';
+import EmailVerificationBanner from '@/components/EmailVerificationBanner';
 
 const spaceMono = Space_Mono({
   weight: ['400', '700'],
@@ -61,11 +64,15 @@ export default function RootLayout({
         <link rel="stylesheet" href="/styles/components/global-chat-fab.css" />
       </head>
       <body className={`${spaceMono.className}`}>
-        <div className="cur-dot" id="dot"></div>
-        <div className="cur-cross" id="cross"></div>
-        <div className="scroll-progress" id="scrollProgress"></div>
-        {children}
-        <GlobalIssueReporter />
+        <PostHogProvider>
+          <div className="cur-dot" id="dot"></div>
+          <div className="cur-cross" id="cross"></div>
+          <div className="scroll-progress" id="scrollProgress"></div>
+          <EmailVerificationBanner />
+          {children}
+          <GlobalIssueReporter />
+          <CookieConsentBanner />
+        </PostHogProvider>
         <Script src="/scripts/constants/roles.js" strategy="beforeInteractive" />
         <Script src="/scripts/api/api.js" strategy="afterInteractive" />
         <Script src="/scripts/utils/helpers.js" strategy="afterInteractive" />
