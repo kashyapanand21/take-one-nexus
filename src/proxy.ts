@@ -16,7 +16,13 @@ const DEVELOPER_EMAILS = [
  * Routes that require authentication AND email verification
  * (messaging is gated behind verification to prevent spam)
  */
-const VERIFIED_ONLY_ROUTES = ['/chat'];
+const VERIFIED_ONLY_ROUTES = [
+  '/chat',
+  '/leaderboard',
+  '/crew.htm',
+  '/project.htm',
+  '/scripts.htm'
+];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -97,5 +103,14 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/chat/:path*', '/profile/:path*', '/developer/:path*'],
+  matcher: [
+    '/admin/:path*', 
+    '/chat/:path*', 
+    '/profile/:path*', 
+    '/developer/:path*',
+    '/leaderboard/:path*',
+    '/crew.htm',
+    '/project.htm',
+    '/scripts.htm'
+  ],
 };

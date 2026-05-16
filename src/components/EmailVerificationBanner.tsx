@@ -70,70 +70,134 @@ export default function EmailVerificationBanner() {
       position: 'sticky',
       top: 0,
       zIndex: 9000,
-      background: 'linear-gradient(to right, rgba(255,77,26,0.1), rgba(255,122,26,0.08))',
-      border: 'none',
-      borderBottom: '1px solid rgba(255,77,26,0.3)',
-      boxShadow: '0 2px 20px rgba(255,77,26,0.15)',
+      background: 'rgba(6, 8, 10, 0.95)',
+      backdropFilter: 'blur(12px)',
+      borderBottom: '1px solid rgba(255, 77, 26, 0.4)',
+      boxShadow: '0 4px 30px rgba(255, 77, 26, 0.15)',
       fontFamily: 'var(--font-main)',
-      padding: '10px 24px',
+      padding: '12px 24px',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
       gap: 16,
       flexWrap: 'wrap',
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <span style={{ color: 'var(--neon)', fontSize: 14, flexShrink: 0 }}>⚡</span>
+      {/* Animated Scanline Effect */}
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: '1px',
+        background: 'rgba(255, 77, 26, 0.3)',
+        boxShadow: '0 0 10px rgba(255, 77, 26, 0.5)',
+        animation: 'banner-scan 3s linear infinite'
+      }} />
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        <div style={{
+          width: 32,
+          height: 32,
+          borderRadius: '50%',
+          background: 'rgba(255, 77, 26, 0.1)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          border: '1px solid rgba(255, 77, 26, 0.3)',
+          color: 'var(--neon)',
+          fontSize: 14,
+          flexShrink: 0
+        }}>
+          ⚡
+        </div>
         <div>
-          <span style={{ fontSize: 10, letterSpacing: '0.25em', textTransform: 'uppercase', color: 'var(--neon)', fontWeight: 700 }}>
-            Email Not Verified
-          </span>
-          <span style={{ fontSize: 11, color: 'var(--silver)', marginLeft: 12, letterSpacing: '0.05em' }}>
+          <div style={{ 
+            fontSize: 10, 
+            letterSpacing: '0.3em', 
+            textTransform: 'uppercase', 
+            color: 'var(--neon)', 
+            fontWeight: 800,
+            marginBottom: 2
+          }}>
+            Restricted Access: Verification Required
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--silver)', letterSpacing: '0.05em', opacity: 0.8 }}>
             {sent
-              ? 'Verification email sent — check your inbox.'
+              ? `Verification uplink transmitted to ${email}.`
               : error
               ? error
-              : 'Verify your email to access messaging, projects, and tasks.'}
-          </span>
+              : 'Messaging, projects, and leaderboard are locked until email signal is confirmed.'}
+          </div>
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0 }}>
+      <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexShrink: 0 }}>
         {!sent && (
           <button
             id="resend-verification-btn"
             onClick={handleResend}
             disabled={sending || cooldown > 0}
             style={{
-              background: 'var(--neon)',
-              color: '#06080A',
-              border: 'none',
-              padding: '8px 18px',
+              background: 'transparent',
+              color: 'var(--neon)',
+              border: '1px solid var(--neon)',
+              padding: '8px 20px',
               fontSize: 9,
               fontWeight: 900,
-              letterSpacing: '0.25em',
+              letterSpacing: '0.2em',
               textTransform: 'uppercase',
               cursor: sending || cooldown > 0 ? 'not-allowed' : 'pointer',
               fontFamily: 'var(--font-main)',
-              opacity: sending || cooldown > 0 ? 0.6 : 1,
-              transition: 'all 0.2s',
+              opacity: sending || cooldown > 0 ? 0.5 : 1,
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              boxShadow: '0 0 10px rgba(255, 77, 26, 0.1)',
               whiteSpace: 'nowrap',
             }}
           >
-            {sending ? '◌ Sending…' : cooldown > 0 ? `Resend in ${cooldown}s` : 'Resend Email'}
+            {sending ? '◌ Transmitting...' : cooldown > 0 ? `Retry in ${cooldown}s` : 'Resend Signal'}
           </button>
         )}
         {sent && (
-          <span style={{ fontSize: 10, color: 'var(--neon)', letterSpacing: '0.15em' }}>✓ Sent!</span>
+          <div style={{ 
+            fontSize: 10, 
+            color: 'var(--cyan)', 
+            letterSpacing: '0.15em',
+            fontWeight: 800,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6
+          }}>
+            <span style={{ fontSize: 14 }}>✓</span> SIGNAL SENT
+          </div>
         )}
         <button
           onClick={() => setShow(false)}
-          style={{ background: 'none', border: 'none', color: 'var(--dim)', cursor: 'pointer', fontSize: 16, lineHeight: 1, padding: '0 4px' }}
+          style={{ 
+            background: 'none', 
+            border: 'none', 
+            color: 'var(--dim)', 
+            cursor: 'pointer', 
+            fontSize: 18, 
+            lineHeight: 1, 
+            padding: '4px',
+            opacity: 0.5,
+            transition: 'opacity 0.2s'
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
+          onMouseLeave={(e) => e.currentTarget.style.opacity = '0.5'}
           aria-label="Dismiss"
         >
           ×
         </button>
       </div>
+
+      <style>{`
+        @keyframes banner-scan {
+          0% { top: 0; opacity: 0; }
+          50% { opacity: 1; }
+          100% { top: 100%; opacity: 0; }
+        }
+      `}</style>
     </div>
   );
 }

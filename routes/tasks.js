@@ -150,32 +150,27 @@ router.patch('/:id', authenticateUser, async (req, res) => {
       return res.status(403).json({ success: false, message: 'Access denied' });
     }
 
-    // Permission Check:
-    // - In DMs, both users are leaders.
-    // - In Groups, leaders are Admin, Director, Developer.
-    const isLead = !task.conversation.is_group || 
-                   ['Admin', 'Developer'].includes(req.user.role) || 
-                   ['Director', 'Admin'].includes(member.role);
-    
+    const isCreator = task.creator_id === userId;
+    const isAdmin = ['Admin', 'Developer'].includes(req.user.role);
     const isAssignee = task.assignee_id === userId;
 
-    if (!isLead && !isAssignee && status) {
+    if (!isCreator && !isAdmin && !isAssignee && status) {
        return res.status(403).json({ success: false, message: 'You are not authorized to update this task status.' });
     }
 
-    if (!isLead && (priority || title || description || assigneeId || dueDate)) {
-      return res.status(403).json({ success: false, message: 'Only leaders can modify mission details.' });
+    if (!isCreator && !isAdmin && (priority || title || description || assigneeId || dueDate)) {
+      return res.status(403).json({ success: false, message: 'Only the mission creator or an Admin can modify mission details.' });
     }
 
     const updatedTask = await prisma.task.update({
       where: { id: taskId },
       data: {
         ...(status && { status }),
-        ...(priority && isLead && { priority }),
-        ...(title && isLead && { title: title.trim() }),
-        ...(description !== undefined && isLead && { description: description?.trim() || null }),
-        ...(assigneeId !== undefined && isLead && { assignee_id: assigneeId ? Number(assigneeId) : null }),
-        ...(dueDate !== undefined && isLead && { due_date: dueDate ? new Date(dueDate) : null }),
+        ...(priority && (isCreator || isAdmin) && { priority }),
+        ...(title && (isCreator || isAdmin) && { title: title.trim() }),
+        ...(description !== undefined && (isCreator || isAdmin) && { description: description?.trim() || null }),
+        ...(assigneeId !== undefined && (isCreator || isAdmin) && { assignee_id: assigneeId ? Number(assigneeId) : null }),
+        ...(dueDate !== undefined && (isCreator || isAdmin) && { due_date: dueDate ? new Date(dueDate) : null }),
         ...(status === 'Done' && { completed_at: new Date() })
       }
     });
@@ -227,12 +222,11 @@ router.delete('/:id', authenticateUser, async (req, res) => {
       return res.status(403).json({ success: false, message: 'Access denied.' });
     }
 
-    const isLead = !task.conversation.is_group || 
-                   ['Admin', 'Developer'].includes(req.user.role) || 
-                   ['Director', 'Admin'].includes(member.role);
+    const isCreator = task.creator_id === userId;
+    const isAdmin = ['Admin', 'Developer'].includes(req.user.role);
 
-    if (!isLead) {
-      return res.status(403).json({ success: false, message: 'Unauthorized. Only leaders can delete missions.' });
+    if (!isCreator && !isAdmin) {
+      return res.status(403).json({ success: false, message: 'Unauthorized. Only the mission creator or an Admin can delete missions.' });
     }
 
     await prisma.task.delete({
@@ -280,13 +274,12 @@ router.post('/:id/approve', authenticateUser, async (req, res) => {
       return res.status(400).json({ success: false, message: 'Task is already approved.' });
     }
 
-    // Check if user is authorized to approve
-    const isLead = !task.conversation.is_group || 
-                   ['Admin', 'Developer'].includes(req.user.role) || 
-                   ['Director', 'Admin'].includes(member.role);
+    // Check if user is authorized to approve: only creator or admin
+    const isCreator = task.creator_id === userId;
+    const isAdmin = ['Admin', 'Developer'].includes(req.user.role);
 
-    if (!isLead) {
-      return res.status(403).json({ success: false, message: 'Unauthorized. Only leaders can approve missions and grant rewards.' });
+    if (!isCreator && !isAdmin) {
+      return res.status(403).json({ success: false, message: 'Unauthorized. Only the mission creator can approve missions and grant rewards.' });
     }
 
     // Update task and award credits in a transaction

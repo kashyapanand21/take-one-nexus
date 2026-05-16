@@ -42,6 +42,14 @@ export const RATE_LIMITS: Record<string, RateLimitOptions> = {
     limit: 10,
     windowMs: 60 * 1000, // 10 tasks per minute per user
   },
+  projectCreate: {
+    limit: 5,
+    windowMs: 10 * 60 * 1000, // 5 projects per 10 minutes
+  },
+  scriptCreate: {
+    limit: 5,
+    windowMs: 10 * 60 * 1000, // 5 scripts per 10 minutes
+  },
 
   // Generic API fallback
   api: {

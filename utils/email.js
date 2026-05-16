@@ -1,4 +1,5 @@
 const { Resend } = require('resend');
+const { buildVerifyEmailTemplate, buildResetPasswordTemplate } = require('./email-templates-legacy');
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -15,7 +16,7 @@ async function sendWelcomeEmail(to, name) {
 
   try {
     const { data, error } = await resend.emails.send({
-      from: 'TAKE ONE NEXUS <onboarding@takeone-nexus.net.in>', // Replace with your verified domain in production
+      from: 'TAKE ONE NEXUS <onboarding@takeone-nexus.net.in>',
       to: [to],
       subject: 'SIGNAL ESTABLISHED: Welcome to the Nexus, ' + name,
       html: `
@@ -114,13 +115,56 @@ async function sendWelcomeEmail(to, name) {
       console.error('[Email] Resend error:', error);
       return;
     }
-
-
   } catch (err) {
     console.error('[Email] Unexpected error sending welcome email:', err.message);
   }
 }
 
+/**
+ * Sends a cinematic verification email.
+ */
+async function sendVerificationEmail(to, name, token) {
+  if (!process.env.RESEND_API_KEY) return;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const verificationUrl = `${appUrl}/api/auth/verify-email?token=${token}`;
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: 'TAKE ONE NEXUS <auth@takeone-nexus.net.in>',
+      to: [to],
+      subject: 'ACTION REQUIRED: Verify Your Nexus Signal',
+      html: buildVerifyEmailTemplate({ userName: name, verificationUrl })
+    });
+    if (error) console.error('[Email] Verification send error:', error);
+  } catch (err) {
+    console.error('[Email] Verification unexpected error:', err.message);
+  }
+}
+
+/**
+ * Sends a cinematic password reset email.
+ */
+async function sendPasswordResetEmail(to, name, token) {
+  if (!process.env.RESEND_API_KEY) return;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const resetUrl = `${appUrl}/reset-password?token=${token}`;
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: 'TAKE ONE NEXUS <security@takeone-nexus.net.in>',
+      to: [to],
+      subject: 'SECURITY PROTOCOL: Password Reset Requested',
+      html: buildResetPasswordTemplate({ userName: name, resetUrl })
+    });
+    if (error) console.error('[Email] Reset send error:', error);
+  } catch (err) {
+    console.error('[Email] Reset unexpected error:', err.message);
+  }
+}
+
 module.exports = {
-  sendWelcomeEmail
+  sendWelcomeEmail,
+  sendVerificationEmail,
+  sendPasswordResetEmail
 };
+

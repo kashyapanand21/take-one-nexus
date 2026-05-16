@@ -1151,11 +1151,9 @@ export default function ChatPage() {
                       <div className="tasks-list">
                         {tasks.map(task => {
                           const assignee = activeConv?.users.find(u => u.id === task.assignee_id);
-                          const isLead = activeConv && (
-                            !activeConv.is_group || 
-                            ['admin', 'developer'].includes(user?.role?.toLowerCase() || '') || 
-                            ['Director', 'Admin'].includes(activeConv.my_role || '')
-                          );
+                          const isCreator = task.creator_id === user?.id;
+                          const isAdmin = ['admin', 'developer'].includes(user?.role?.toLowerCase() || '');
+                          const isManageable = isCreator || isAdmin;
                           const isAssignee = task.assignee_id === user?.id;
 
                           return (
@@ -1163,7 +1161,7 @@ export default function ChatPage() {
                               <div className="task-main">
                                 <div className="task-top-row">
                                   <div className="task-title">{task.title}</div>
-                                  {isLead && (
+                                  {isManageable && (
                                     <button onClick={() => deleteTask(task.id)} className="task-delete-btn" title="Abort Mission">
                                       <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2" fill="none"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                                     </button>
@@ -1188,7 +1186,7 @@ export default function ChatPage() {
 
                                 <div className="task-footer">
                                   <div className="task-status-wrap">
-                                    {isLead || isAssignee ? (
+                                    {isManageable || isAssignee ? (
                                       <select 
                                         value={task.status} 
                                         onChange={(e) => updateTaskStatus(task.id, e.target.value)}
@@ -1224,7 +1222,7 @@ export default function ChatPage() {
                                   </div>
                                 </div>
 
-                                {task.status === 'Done' && task.approval_status !== 'Approved' && isLead && (
+                                {task.status === 'Done' && task.approval_status !== 'Approved' && isManageable && (
                                   <button 
                                     className="task-approve-btn"
                                     onClick={() => approveTask(task.id)}

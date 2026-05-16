@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { pool } = require('../config/db');
 const { authenticateUser, requireSameUser } = require('../middleware/auth');
-const { sendWelcomeEmail } = require('../utils/email');
+const { sendWelcomeEmail, sendVerificationEmail } = require('../utils/email');
 const { PrismaClient } = require('@prisma/client');
 const { formatDisplayName, getCanonicalDisplayName } = require('../utils/formatting');
 const Pusher = require('pusher');
@@ -214,8 +214,6 @@ router.post('/register', registerLimiter, async (req, res) => {
     // Send verification email asynchronously via Resend
     (async () => {
       try {
-        const { Resend } = require('resend');
-        const resendClient = new Resend(process.env.RESEND_API_KEY);
         const token = crypto.randomBytes(32).toString('hex');
         const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
         const expiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
@@ -228,24 +226,8 @@ router.post('/register', registerLimiter, async (req, res) => {
           },
         });
 
-        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://takeone-nexus.net.in';
-        const verificationUrl = `${baseUrl}/api/auth/verify-email?token=${token}`;
-
-        // Use pre-built template if available, else inline
-        let html;
-        try {
-          const { buildVerifyEmailTemplate } = require('../src/lib/email-templates/verify-email');
-          html = buildVerifyEmailTemplate({ userName: user.name, verificationUrl, expiresInHours: 24 });
-        } catch {
-          html = `<p>Hello ${user.name},</p><p>Verify your TAKE ONE account: <a href="${verificationUrl}">${verificationUrl}</a></p><p>Expires in 24 hours.</p>`;
-        }
-
-        await resendClient.emails.send({
-          from: 'TAKE ONE Nexus <noreply@takeone-nexus.net.in>',
-          to: user.email,
-          subject: '⚡ Verify your TAKE ONE account',
-          html,
-        });
+        // Transmission: Send Cinematic Verification Email
+        await sendVerificationEmail(user.email, user.name, token);
       } catch (verifyErr) {
         console.error('[Registration] Verification email failed:', verifyErr.message);
       }
