@@ -27,8 +27,11 @@ We will work diligently to validate and fix the vulnerability. Once resolved, we
 
 To maintain a secure ecosystem, we adhere to the following practices:
 - **Authentication**: JWT tokens stored securely via HTTP-only, secure cookies. Migration to Clerk identity services is actively maintained.
+- **Role-Based Access Control (RBAC)**: All task assignment, creation, and administrative APIs are strictly gated to ensure only authorized users (e.g. `creator`, `admin`) can access them.
 - **Database**: Parameterized queries using Prisma and prepared SQL statements to prevent SQL Injection.
 - **Data Privacy**: Passwords are cryptographically hashed using bcrypt. Sensitive user data is never exposed to the frontend.
+- **Rate Limiting**: Global and endpoint-specific rate limiting (Login, Register, Password Reset, Email Delivery) are enforced on both the Next.js API and legacy Express server to prevent abuse and brute force attacks.
+- **Security Headers**: Strict Content Security Policy (CSP), anti-clickjacking (X-Frame-Options), and strict referrer policies are enforced globally via Next.js and Express middleware.
 - **XSS Prevention**: React/Next.js automatically sanitizes inputs, and we strictly validate HTML rendered on static routes.
 
 Thank you for helping us keep TAKE ONE Nexus secure!

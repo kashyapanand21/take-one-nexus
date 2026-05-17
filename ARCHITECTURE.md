@@ -64,6 +64,12 @@ The Next.js Edge Middleware validates the HTTP-only JWT cookie and enforces acce
 ### Express `middleware/auth.js`
 Stateless JWT verification for Express API routes. Re-uses the same `JWT_SECRET`.
 
+### Role-Based Access Control (RBAC) & Task System
+Tasks can only be created and managed by users with the `creator` role.
+- Creators can create, edit, and assign tasks.
+- Standard users (`crew`, etc.) can only be assigned to tasks and mark them as completed.
+- Gated securely at both the middleware (`/admin/*` and task endpoints) and frontend UI levels.
+
 ---
 
 ## 3. Database & ORM Layer
@@ -133,7 +139,21 @@ Dual-layer rate limiting — Next.js and Express both protected independently.
 
 ---
 
-## 6. Observability
+## 6. Security Headers (CSP & Helmet)
+
+TAKE ONE Nexus employs strict HTTP security headers to achieve an A/A+ security rating.
+
+- **Content Security Policy (CSP)**: Blocks inline scripts (except nonces/hashes where needed), restricts font/image sources, and mandates `https:` for external assets.
+- **X-Frame-Options (`DENY`)**: Completely mitigates clickjacking attacks.
+- **X-Content-Type-Options (`nosniff`)**: Prevents MIME-type sniffing.
+- **Referrer-Policy (`strict-origin-when-cross-origin`)**: Protects cross-origin request data.
+- **Permissions-Policy**: Disables unnecessary browser features (geolocation, camera, microphone) globally.
+
+Applied globally via `next.config.js` and Express helmet middleware.
+
+---
+
+## 7. Observability
 
 Strictly separated between two tools to avoid scope creep:
 
@@ -167,7 +187,7 @@ Strictly separated between two tools to avoid scope creep:
 
 ---
 
-## 8. Real-Time Telemetry (Pusher)
+## 9. Real-Time Telemetry (Pusher)
 
 To give TAKE ONE Nexus its signature "live mission control" feel, we utilize Pusher WebSockets.
 - **Global Chat**: Direct peer-to-peer messaging (`chat.js`).

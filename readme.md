@@ -43,9 +43,10 @@ TAKE ONE Nexus is the definitive digital ecosystem for the next generation of fi
 - **🎭 Cinematic Production Profiles:** Live creator profiles serving as a digital reel, complete with skill badges, production history, and portfolio showcase.
 - **🛰️ Secure Transmission (Chat):** Real-time communication suite powered by Pusher. Direct messaging, group chats, live sync, and intelligent unread tracking.
 - **🏆 Live Leaderboard:** Real-time community ranking system powered by our internal Credits engine to reward platform engagement.
-- **💎 Creator Credits:** The heartbeat of the Nexus economy. Earn credits for collaborations and active participation.
-- **🛡️ Developer & Platform Security:** Integrated global bug reporting, role-based admin dashboard, and robust session security.
-- **📊 Live Production Telemetry:** Admin dashboards reporting real-time, IST-synced metrics of user onboarding, scripting activity, and platform usage.
+- **💎 Creator Credits & Task System:** Secure, role-based task management where only verified creators can assign and complete production tasks.
+- **🛡️ Production-Grade Security:** Global rate limiting, strict Content Security Policy (CSP), anti-clickjacking headers, XSS sanitization, and parameterized SQL queries.
+- **📊 Observability & Analytics:** Integrated PostHog telemetry (GDPR compliant) and Sentry error tracking for robust production monitoring.
+- **✉️ Cinematic Automation:** Resend-powered transactional email system for seamless, cinematic user onboarding and verification.
 
 ---
 
@@ -74,7 +75,9 @@ This project is built using a modern, scalable hybrid architecture.
 | **Database** | MySQL (optimized for TiDB Cloud) |
 | **ORM** | Prisma |
 | **Real-time** | Pusher |
-| **Authentication** | JWT stored in secure HTTP-only cookies (Clerk integration ready) |
+| **Authentication** | JWT stored in secure HTTP-only cookies |
+| **Mailing** | Resend API |
+| **Observability** | PostHog (Analytics), Sentry (Error Tracking) |
 | **Deployment** | Vercel (Hybrid Serverless & Static) |
 
 ---
@@ -82,8 +85,8 @@ This project is built using a modern, scalable hybrid architecture.
 ## 🏗️ Architecture Overview
 
 TAKE ONE Nexus utilizes a **dual-server architecture** running side-by-side on Vercel:
-- **Next.js App (`src/app/`):** Handles dynamic authenticated routes (e.g., `/profile`, `/chat`, `/admin`).
-- **Express Server (`server.js`):** Acts as the API layer (`/api/*`) and serves high-performance static HTML files (`public/*.htm`).
+- **Next.js App (`src/app/`):** Handles dynamic authenticated routes (e.g., `/profile`, `/chat`, `/admin`), PostHog analytics, and Sentry monitoring.
+- **Express Server (`server.js`):** Acts as the API layer (`/api/*`), processes complex SQL queries securely, handles rate limiting, and serves high-performance static HTML files (`public/*.htm`).
 
 > For a deep dive into the system design, read the [ARCHITECTURE.md](ARCHITECTURE.md).
 
@@ -95,11 +98,11 @@ TAKE ONE Nexus utilizes a **dual-server architecture** running side-by-side on V
 take-one-nexus/
 ├── .github/            # GitHub templates and workflows
 ├── config/             # Server configuration (DB, mailer)
-├── middleware/         # Express middleware (Auth, Error handling)
+├── middleware/         # Express middleware (Auth, Error handling, Security Headers, Rate Limiting)
 ├── prisma/             # Database schema and migrations
 ├── public/             # Static Assets, CSS, Vanilla JS, and .htm pages
 ├── routes/             # Express API routes grouped by domain
-├── src/                # Next.js Application (React components, App Router)
+├── src/                # Next.js Application (React components, App Router, Sentry config)
 ├── utils/              # Shared backend utilities
 ├── server.js           # Hybrid Express Server entry point
 └── vercel.json         # Production Deployment Configuration
@@ -116,6 +119,9 @@ Follow these instructions to set up the project locally.
 - **Node.js**: v18+
 - **Database**: MySQL / TiDB instance
 - **Pusher**: Account for real-time WebSockets
+- **Resend**: API key for transactional emails
+- **PostHog**: API key for local analytics tracking (optional)
+- **Sentry**: DSN for error monitoring (optional)
 - **Git**: For version control
 
 ### 1. Clone the repository
@@ -147,6 +153,14 @@ PUSHER_APP_ID="your_app_id"
 PUSHER_SECRET="your_secret"
 NEXT_PUBLIC_PUSHER_KEY="your_key"
 NEXT_PUBLIC_PUSHER_CLUSTER="your_cluster"
+
+# Email Automation (Resend)
+RESEND_API_KEY="re_your_key"
+
+# Observability (PostHog & Sentry)
+NEXT_PUBLIC_POSTHOG_KEY="phc_your_key"
+NEXT_PUBLIC_POSTHOG_HOST="https://eu.i.posthog.com"
+NEXT_PUBLIC_SENTRY_DSN="https://your_dsn@sentry.io/project"
 
 # Local Development API Proxy
 LEGACY_API_ORIGIN="http://127.0.0.1:5001"

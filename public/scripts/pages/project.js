@@ -763,7 +763,7 @@ function renderHomepageScripts(scripts) {
   if (scripts.length === 0) {
     cardRow.innerHTML = `
       <div class="live-empty-card">
-        No live scripts found. Upload one from your role workspace and it will appear here.
+        No projects posted yet. Directors can post the first project here.
       </div>
     `;
     updateLiveScriptStatus(0);
@@ -784,6 +784,16 @@ function renderHomepageScripts(scripts) {
   `).join('');
 
   updateLiveScriptStatus(normalizedScripts.length);
+
+  // Conditional Search Bar Visibility
+  const searchWrapper = document.querySelector('.search-bar-wrapper');
+  if (searchWrapper) {
+    if (scripts.length < 10) {
+      searchWrapper.style.display = 'none';
+    } else {
+      searchWrapper.style.display = 'block';
+    }
+  }
 }
 
 function updateDirectorMonitor(stats = {}, scripts = []) {

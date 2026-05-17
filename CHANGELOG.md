@@ -17,12 +17,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **GDPR Cookie Consent Banner**: Slide-up animated banner — Accept All / Reject / Customize with per-category toggles. Persisted in `localStorage`.
 - **PostHog Analytics**: Consent-gated analytics, session replay (all inputs masked), and feature flags via `PostHogProvider`.
 - **Sentry Error Monitoring**: Backend-only error capture with PII scrubbing (`beforeSend` hook strips password/token/secret fields).
+- **Security Headers**: Strict CSP, X-Frame-Options, and nosniff enabled to prevent XSS and clickjacking.
+- **Task Management RBAC**: Strictly gated task assignment endpoints; only authorized `creator` roles can assign tasks to crew.
 - **Cyberpunk Email Templates**: `src/lib/email-templates/` — HTML templates for verification and password reset matching the platform's cinematic design system.
 
 ### Changed
 - `routes/users.js`: Registration sends verification email (async, non-blocking). Rate limiters applied to login (5/15min) and register (3/hr). `email_verified` now returned in login and `/me` responses.
 - `src/proxy.ts`: Added email verification gate — unverified users are redirected from `/chat` to `/?verify=required`.
 - `src/app/layout.tsx`: Wrapped body in `PostHogProvider`. Added `EmailVerificationBanner` and `CookieConsentBanner`.
+- `public/styles/pages/project.css`: Centered the Explore (Trending Scripts) section for better UI alignment.
+- `public/scripts/pages/project.js`: Implemented conditional rendering for the search bar (hidden if < 10 scripts).
+- `public/scripts/components/global-chat-fab.js`: Updated Chat FAB to trigger login toast/modal instead of redirecting.
 - `prisma/schema.prisma` + `db push`: Added 6 security fields to `User` model.
 - `.env.example`: Documented all new env vars with purpose comments.
 

@@ -132,7 +132,18 @@
         return;
       }
 
-      window.location.href = `/?auth=login&next=${encodeURIComponent(getChatTarget())}`;
+      if (typeof showToast === 'function') {
+        showToast('Login Required to Access Chat ✦');
+      } else {
+        alert('Login Required to Access Chat ✦');
+      }
+      
+      const loginModal = document.getElementById('loginModal');
+      if (typeof openTakeOneModal === 'function' && loginModal) {
+        openTakeOneModal(loginModal);
+      } else {
+        window.location.href = `/?auth=login&next=${encodeURIComponent(getChatTarget())}`;
+      }
     });
 
     document.body.appendChild(button);

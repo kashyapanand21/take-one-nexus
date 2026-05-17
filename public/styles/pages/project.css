@@ -2651,6 +2651,42 @@ footer {
   color: var(--void);
 }
 
+/* ── EXPLORE SECTION CENTERING ── */
+#explore {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+#explore .sec-label {
+  justify-content: center;
+}
+
+#explore .sec-label::after {
+  content: '';
+  display: block; 
+  width: 24px; 
+  height: 1px;
+  background: var(--neon);
+  box-shadow: 0 0 6px var(--neon);
+}
+
+#explore .sec-sub {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#explore .tabs {
+  margin-left: auto;
+  margin-right: auto;
+  justify-content: center;
+}
+
+#explore .scroll-container {
+  width: 100%;
+}
+
 @media (max-width: 768px) {
   /* Mobile Performance Optimizations */
   .modal-content, .chat-dropdown-menu, .search-bar, .crew-role-option, .person-card {

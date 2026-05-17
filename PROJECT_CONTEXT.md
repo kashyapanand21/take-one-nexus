@@ -45,7 +45,7 @@ Creators use their profile as a digital reel.
 Secure transmission for project collaboration — **requires verified email**.
 - **Powered by Pusher**: WebSockets provide instant message delivery.
 - **Role-Based Groups**: Production channels feature explicit roles (Director, Admin, Member) via a junction table schema.
-- **Mission Assignment**: Integrated Task Management allows Directors to assign "missions" to crew members with real-time status tracking.
+- **Mission Assignment & RBAC**: Integrated Task Management allows `creator` or `admin` roles to assign "missions" to crew members. Only authorized users can create/edit tasks, while crew can only mark their assigned tasks as complete.
 - **Cinematic UI**: Cursor-based pagination, intelligent date-grouping, and tabbed interface for Transmissions vs. Missions.
 
 ### 4. Creator Credits & Leaderboard
@@ -61,11 +61,11 @@ Full lifecycle email verification to secure platform access.
 - **Token Security**: Tokens are 32-byte cryptographically random values stored as SHA-256 hashes. The raw token only travels in the email link — never in the database.
 - **Pages**: `/verify-email` (handles all verification states), `/forgot-password`, `/reset-password` (with password strength meter).
 
-### 6. IP-Based Rate Limiting *(v1.1)*
-Sliding-window rate limiters on all auth-related endpoints.
-- **Next.js API routes**: `src/lib/rate-limiter.ts` (used by `/api/auth/*`).
-- **Express routes**: `middleware/rateLimiter.js` (used by `/api/users/login` and `/api/users/register`).
-- **Limits**: Login: 5/15min per IP | Register: 3/hour per IP | Verify: 10/hour | Resend: 3/hour | Forgot/Reset: 5/hour.
+### 6. IP-Based Rate Limiting & Security Headers *(v1.1)*
+Comprehensive network and browser-level security defenses.
+- **Next.js API routes**: Sliding-window rate limiters via `src/lib/rate-limiter.ts`.
+- **Express routes**: Helmet middleware for security headers, and `middleware/rateLimiter.js` for IP-based limits (Login: 5/15min, Register: 3/hour).
+- **Security Headers**: Strict Content Security Policy (CSP), X-Frame-Options (DENY), and nosniff enabled globally to prevent XSS, clickjacking, and MIME-sniffing.
 - **Fail-open design**: Limiter errors never block legitimate users.
 
 ### 7. GDPR Cookie Consent *(v1.1)*

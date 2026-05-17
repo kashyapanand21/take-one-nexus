@@ -23,6 +23,8 @@ Whether you're participating in **SSOC**, **GSSoC**, or just dropping by, we wel
    npm install
    ```
 5. **Set up your environment variables** as detailed in the `README.md` (duplicate `.env.example` to `.env`).
+   - *Note*: For local development, `NEXT_PUBLIC_POSTHOG_KEY` and `NEXT_PUBLIC_SENTRY_DSN` are optional. If left blank, analytics and error tracking will be bypassed in dev mode.
+   - *Note*: Rate limiting is active locally. If you encounter 429 errors during testing, you can temporarily increase limits in `src/lib/rate-limit-config.ts` or `middleware/rateLimiter.js` (do not commit these changes).
 
 ---
 
