@@ -49,10 +49,10 @@ export default async function LeaderboardPage() {
       <header>
         <a href="/" className="logo">TAKE <span>ONE</span></a>
         <nav>
-          <a href="/#explore">Explore</a>
-          <a href="/crew">Crew</a>
+          <a href="/#explore">Discover Projects</a>
+          <a href="/crew">Find Crew</a>
           <a href="/leaderboard" className="active">Leaderboard</a>
-          <a href="/#upload">Upload</a>
+          <a href="/#upload">Share Your Script</a>
           <a href="/profile">Profile</a>
           <a href="/chat" className="nav-chat-link">Messages</a>
         </nav>

@@ -833,7 +833,7 @@ export default function ChatPage() {
         <a href="/" className="logo">TAKE <span>ONE</span></a>
         <nav>
           <a href="/#explore">Discover Projects</a>
-          <a href="/crew.htm">Find Crew</a>
+          <a href="/crew">Find Crew</a>
           <a href="/leaderboard">Leaderboard</a>
           <a href="/#upload">Share Your Script</a>
           <a href="/profile">Profile</a>

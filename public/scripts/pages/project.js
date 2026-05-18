@@ -1462,15 +1462,9 @@ function applyRoleBasedUI(user) {
     uploadActionButton.onclick = uploadWork;
   }
 
-  // Toggle guest split CTAs vs logged-in CTAs
-  if (guestHeroActions && userHeroActions) {
-    if (!user) {
-      guestHeroActions.style.display = 'flex';
-      userHeroActions.style.display = 'none';
-    } else {
-      guestHeroActions.style.display = 'none';
-      userHeroActions.style.display = 'flex';
-    }
+  // Ensure the guest split CTAs (the pathway CTAs) are always displayed as the unified hero actions
+  if (guestHeroActions) {
+    guestHeroActions.style.display = 'flex';
   }
 
   if (!user) {
@@ -1547,6 +1541,17 @@ function applyRoleBasedUI(user) {
       heroSecondaryAction.textContent = workspace.button || 'Upload Your Script';
       heroSecondaryAction.setAttribute('href', '#upload');
     }
+    if (ctaScript) {
+      ctaScript.onclick = (event) => {
+        event.preventDefault();
+        const uploadSec = document.getElementById('upload');
+        if (uploadSec) {
+          uploadSec.scrollIntoView({ behavior: 'smooth' });
+        } else {
+          window.location.hash = 'upload';
+        }
+      };
+    }
     if (navUploadLink) {
       navUploadLink.textContent = workspace.label;
       navUploadLink.setAttribute('href', '#upload');
@@ -1571,6 +1576,12 @@ function applyRoleBasedUI(user) {
     heroSecondaryAction.onclick = null;
     heroSecondaryAction.textContent = workspace.secondary || 'Build Your Crew Profile';
     heroSecondaryAction.setAttribute('href', '/profile');
+  }
+  if (ctaScript) {
+    ctaScript.onclick = (event) => {
+      event.preventDefault();
+      window.location.href = '/profile';
+    };
   }
   if (navUploadLink) {
     navUploadLink.textContent = workspace.label;
