@@ -5,9 +5,9 @@
 
 const Navbar = {
     config: [
-        { label: 'Explore', href: '/#explore' },
-        { label: 'Crew', href: '/crew', id: 'navCrewLink' },
-        { label: 'Upload', href: '/#upload', id: 'navUploadLink' },
+        { label: 'Discover Projects', href: '/#explore' },
+        { label: 'Find Crew', href: '/crew', id: 'navCrewLink' },
+        { label: 'Share Your Script', href: '/#upload', id: 'navUploadLink' },
         { label: 'Profile', href: '/profile' }
     ],
 
@@ -42,7 +42,7 @@ const Navbar = {
 
             // Standardize Crew Link
             if (item.id === 'navCrewLink') {
-                label = 'Crew';
+                label = 'Find Crew';
                 href = '/crew';
             }
 

@@ -1,0 +1,184 @@
+/* ── FUTURISTIC NEXUS ONBOARDING TOUR (HUD) ── */
+
+.nexus-tour-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9990;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+  background: transparent;
+}
+
+.nexus-tour-spotlight {
+  position: absolute;
+  box-shadow: 0 0 0 9999px rgba(3, 4, 6, 0.75);
+  border: 1px solid var(--neon);
+  border-radius: 4px;
+  pointer-events: auto;
+  z-index: 9991;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 0 15px rgba(255, 77, 26, 0.3), 0 0 0 9999px rgba(3, 4, 6, 0.75);
+}
+
+.nexus-tour-tooltip {
+  position: absolute;
+  width: 320px;
+  background: rgba(10, 12, 16, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 3px solid var(--neon);
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8), 0 0 2px rgba(255, 255, 255, 0.15) inset;
+  z-index: 9995;
+  pointer-events: auto;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  font-family: 'Space Mono', monospace;
+  backdrop-filter: blur(12px);
+}
+
+.nexus-tour-tooltip::before {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-style: solid;
+}
+
+/* Tooltip placements arrow style */
+.nexus-tour-tooltip.placement-bottom::before {
+  bottom: 100%;
+  left: 30px;
+  border-width: 0 8px 8px 8px;
+  border-color: transparent transparent var(--neon) transparent;
+}
+
+.nexus-tour-tooltip.placement-top::before {
+  top: 100%;
+  left: 30px;
+  border-width: 8px 8px 0 8px;
+  border-color: rgba(10, 12, 16, 0.95) transparent transparent transparent;
+}
+
+.nexus-tour-tooltip.placement-left::before {
+  left: 100%;
+  top: 30px;
+  border-width: 8px 0 8px 8px;
+  border-color: transparent transparent transparent rgba(10, 12, 16, 0.95);
+}
+
+.nexus-tour-tooltip.placement-right::before {
+  right: 100%;
+  top: 30px;
+  border-width: 8px 8px 8px 0;
+  border-color: transparent rgba(10, 12, 16, 0.95) transparent transparent;
+}
+
+.nexus-tour-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 8px;
+}
+
+.nexus-tour-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 16px;
+  letter-spacing: 0.15em;
+  color: var(--neon);
+  text-transform: uppercase;
+}
+
+.nexus-tour-step {
+  font-size: 9px;
+  color: var(--silver);
+  opacity: 0.5;
+}
+
+.nexus-tour-body {
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--silver);
+  margin-bottom: 20px;
+}
+
+.nexus-tour-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.nexus-tour-skip {
+  background: transparent;
+  border: none;
+  color: var(--silver);
+  opacity: 0.5;
+  font-size: 9px;
+  cursor: pointer;
+  padding: 4px 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  transition: opacity 0.3s, color 0.3s;
+}
+
+.nexus-tour-skip:hover {
+  opacity: 1;
+  color: var(--white);
+}
+
+.nexus-tour-nav {
+  display: flex;
+  gap: 8px;
+}
+
+.nexus-tour-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--cream);
+  font-size: 9px;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.nexus-tour-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.nexus-tour-btn.btn-next {
+  background: var(--neon);
+  border-color: var(--neon);
+  color: #06080A;
+}
+
+.nexus-tour-btn.btn-next:hover {
+  background: #ff6a42;
+  box-shadow: 0 0 10px rgba(255, 77, 26, 0.4);
+}
+
+/* Float Animation */
+@keyframes tourFloat {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-5px); }
+  100% { transform: translateY(0px); }
+}
+
+.tour-pulse-glow {
+  animation: tourFloat 3s ease-in-out infinite;
+}
+
+@media (max-width: 768px) {
+  .nexus-tour-tooltip {
+    width: 280px;
+    padding: 16px;
+  }
+}

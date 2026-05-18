@@ -104,6 +104,11 @@ function renderDynamicUploadForm(user) {
             </div>
         `;
     }).join('');
+
+    // Initialize premium interactive submission wizard elements (Logline Builder & Crew Planner)
+    if (typeof SubmissionHelper !== 'undefined') {
+        SubmissionHelper.init();
+    }
 }
 
 async function uploadWork() {
@@ -1445,6 +1450,9 @@ function applyRoleBasedUI(user) {
   const heroSecondaryAction = document.getElementById('heroSecondaryAction');
   const navUploadLink = document.getElementById('navUploadLink');
   const uploadActionButton = document.getElementById('uploadActionButton');
+  const guestHeroActions = document.getElementById('guestHeroActions');
+  const userHeroActions = document.getElementById('userHeroActions');
+  const ctaScript = document.getElementById('ctaScript');
   const workspace = getWorkspaceForRole(user?.role);
 
   if (!creatorUploadZone || !crewModePanel) return;
@@ -1452,6 +1460,17 @@ function applyRoleBasedUI(user) {
   // Setup upload action
   if (uploadActionButton) {
     uploadActionButton.onclick = uploadWork;
+  }
+
+  // Toggle guest split CTAs vs logged-in CTAs
+  if (guestHeroActions && userHeroActions) {
+    if (!user) {
+      guestHeroActions.style.display = 'flex';
+      userHeroActions.style.display = 'none';
+    } else {
+      guestHeroActions.style.display = 'none';
+      userHeroActions.style.display = 'flex';
+    }
   }
 
   if (!user) {
@@ -1469,6 +1488,12 @@ function applyRoleBasedUI(user) {
       heroSecondaryAction.textContent = 'Create Profile';
       heroSecondaryAction.setAttribute('href', '#');
       heroSecondaryAction.onclick = (event) => {
+        event.preventDefault();
+        openTakeOneModal(registerModal);
+      };
+    }
+    if (ctaScript) {
+      ctaScript.onclick = (event) => {
         event.preventDefault();
         openTakeOneModal(registerModal);
       };

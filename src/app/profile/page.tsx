@@ -132,8 +132,8 @@ export default async function ProfilePage({
           <a href="/" className="logo">TAKE <span>ONE</span></a>
           <nav>
             <a href="/">Home</a>
-            <a href="/#explore">Explore</a>
-            <a href="/crew">Crew</a>
+            <a href="/#explore">Discover Projects</a>
+            <a href="/crew">Find Crew</a>
             <a href="/leaderboard">Leaderboard</a>
             <a href="/chat" className="nav-chat-link">Messages</a>
             {isOwner && <button className="profile-logout" id="profileLogoutBtn" type="button">Logout</button>}

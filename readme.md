@@ -88,7 +88,7 @@ TAKE ONE Nexus utilizes a **dual-server architecture** running side-by-side on V
 - **Next.js App (`src/app/`):** Handles dynamic authenticated routes (e.g., `/profile`, `/chat`, `/admin`), PostHog analytics, and Sentry monitoring.
 - **Express Server (`server.js`):** Acts as the API layer (`/api/*`), processes complex SQL queries securely, handles rate limiting, and serves high-performance static HTML files (`public/*.htm`).
 
-> For a deep dive into the system design, read the [ARCHITECTURE.md](ARCHITECTURE.md).
+> 📖 **Developer Resources**: For a deep dive into the platform architecture, brand clarity reforms, dynamic self-onboarding systems, and the screenplay submission helper, explore our premium **[Take One Nexus Developer Wiki](docs/WIKI.md)**. You can also view the core system design details in [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ---
 

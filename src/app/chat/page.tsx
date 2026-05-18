@@ -832,10 +832,10 @@ export default function ChatPage() {
       <header>
         <a href="/" className="logo">TAKE <span>ONE</span></a>
         <nav>
-          <a href="/#explore">Explore</a>
-          <a href="/crew.htm">Crew</a>
+          <a href="/#explore">Discover Projects</a>
+          <a href="/crew.htm">Find Crew</a>
           <a href="/leaderboard">Leaderboard</a>
-          <a href="/#upload">Upload</a>
+          <a href="/#upload">Share Your Script</a>
           <a href="/profile">Profile</a>
           {user?.role && ['admin', 'developer', 'moderator'].includes(user.role.toLowerCase()) && (
             <a href="/admin" style={{ color: 'var(--neon)', fontWeight: 'bold' }}>Admin Panel</a>

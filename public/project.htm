@@ -22,6 +22,7 @@
 
     <link rel="stylesheet" href="/styles/pages/project.css">
     <link rel="stylesheet" href="/styles/components/global-chat-fab.css">
+    <link rel="stylesheet" href="/styles/components/onboarding.css">
 </head>
 
 <body>
@@ -59,10 +60,10 @@
     <header>
         <a href="#" class="logo">TAKE <span>ONE</span></a>
         <nav>
-            <a href="#explore">Explore</a>
-            <a href="/crew" id="navCrewLink">Crew</a>
+            <a href="#explore">Discover Projects</a>
+            <a href="/crew" id="navCrewLink">Find Crew</a>
             <a href="/leaderboard">Leaderboard</a>
-            <a href="#upload" id="navUploadLink">Upload</a>
+            <a href="#upload" id="navUploadLink">Share Your Script</a>
             <a href="/profile">Profile</a>
             <button id="loginBtn" class="nav-cta" style="background: var(--neon); border: none; padding: 9px 20px; cursor: pointer; font-family: 'Bebas Neue', sans-serif; font-size: 9px; letter-spacing: 0.3em; text-transform: uppercase;">
   Join Now
@@ -122,7 +123,12 @@
                 <span class="neon-line">CAMERA.</span>
                 <span class="outline-line">CONNECT.</span>
             </h1>
-<br><br>
+            
+            <div class="hero-clarity-statement">
+                <span>Find your film crew</span>
+                <span>Share your scripts</span>
+                <span>Make your movie</span>
+            </div>
 
 <div class="clapper" aria-hidden="true">
   <div class="clapper-top">
@@ -156,11 +162,24 @@
 
 
             <span class="hero-sub" id="heroSubText">
-                Where directors find their DPs, writers meet their directors,
-                and spot boys become legends. Build your film team — from first
-                script to final cut.
+                Take One Nexus is the decentralized launchpad for independent cinema.
+                Connect with passionate directors, screenwriters, and crew members to bring your vision to the screen.
             </span>
-            <div class="hero-actions">
+            
+            <!-- Guest Split CTAs (Shown when not logged in) -->
+            <div class="hero-actions split-cta-container" id="guestHeroActions">
+                <div class="cta-block">
+                    <button class="btn-primary cta-btn" id="ctaScript" type="button">I Have a Script →</button>
+                    <span class="cta-microcopy">Publish script & build crew</span>
+                </div>
+                <div class="cta-block">
+                    <a href="#explore" class="btn-secondary cta-btn" id="ctaJoin">I Want to Join a Project</a>
+                    <span class="cta-microcopy">Browse active crews & apply</span>
+                </div>
+            </div>
+
+            <!-- User Dashboard CTAs (Shown when logged in, updated dynamically) -->
+            <div class="hero-actions default-cta-row" id="userHeroActions" style="display: none;">
                 <a href="#explore" class="btn-primary" id="heroPrimaryAction">Browse Work →</a>
                 <a href="#upload" class="btn-secondary" id="heroSecondaryAction">Upload Your Work</a>
             </div>
@@ -594,73 +613,117 @@
       <button class="modal-close" id="closeRegisterBtn">&times;</button>
     </div>
     <form id="registerForm">
-      <div class="form-group">
-        <label for="registerName">Full Name</label>
-        <input type="text" id="registerName" placeholder="Arjun Mehta" required>
+      <!-- ── STEP PROGRESS BAR ── -->
+      <div class="wizard-progress-bar">
+        <div class="progress-step active" data-step="1"><span>01</span> Account</div>
+        <div class="progress-step" data-step="2"><span>02</span> Role</div>
+        <div class="progress-step" data-step="3"><span>03</span> Details</div>
       </div>
-      <div class="form-group">
-        <label for="registerEmail">Email Address</label>
-        <input type="email" id="registerEmail" placeholder="your@email.com" required>
+
+      <!-- ── STEP 1: ACCOUNT DETAILS ── -->
+      <div class="wizard-step active" data-step="1">
+        <div class="form-group">
+          <label for="registerName">Full Name</label>
+          <input type="text" id="registerName" placeholder="Arjun Mehta" required>
+        </div>
+        <div class="form-group">
+          <label for="registerEmail">Email Address</label>
+          <input type="email" id="registerEmail" placeholder="your@email.com" required>
+        </div>
+        <div class="form-group">
+          <label for="registerPassword">Password</label>
+          <input type="password" id="registerPassword" placeholder="At least 6 characters" required>
+        </div>
+        <div class="form-group">
+          <label for="registerConfirmPassword">Confirm Password</label>
+          <input type="password" id="registerConfirmPassword" placeholder="Re-enter password" required>
+        </div>
+        <div class="wizard-nav-buttons">
+          <button type="button" class="wizard-btn-next" id="registerNext1" style="flex-grow: 1;">Next Phase →</button>
+        </div>
       </div>
-      <div class="form-group">
-        <label for="registerPassword">Password</label>
-        <input type="password" id="registerPassword" placeholder="At least 6 characters" required>
+
+      <!-- ── STEP 2: PATHWAY & ROLE SELECTION ── -->
+      <div class="wizard-step" data-step="2">
+        <div class="form-group">
+          <label>Choose Your Pathway</label>
+          <div class="pathway-cards-container">
+            <div class="pathway-card" id="pathwayCreator" data-pathway="creator">
+              <div class="pathway-icon">🎬</div>
+              <div class="pathway-title">Creator</div>
+              <p class="pathway-desc">Directors, writers, producers showing off a script & forming crew teams.</p>
+            </div>
+            <div class="pathway-card" id="pathwayCrew" data-pathway="crew">
+              <div class="pathway-icon">🎥</div>
+              <div class="pathway-title">Crew operative</div>
+              <p class="pathway-desc">DPs, editors, actors, sound designers looking to join dynamic sets.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="registerRole">Your Core Specialty</label>
+          <select id="registerRole">
+            <option value="" selected disabled>Select Role</option>
+            <option value="Director">Director</option>
+            <option value="Cinematographer / DP">Cinematographer / DP</option>
+            <option value="Writer">Writer</option>
+            <option value="Editor">Editor</option>
+            <option value="Sound Designer">Sound Designer</option>
+            <option value="Designer">Designer</option>
+            <option value="Actor">Actor</option>
+            <option value="Producer">Producer</option>
+            <option value="Lighting Crew">Lighting Crew</option>
+            <option value="Set Support">Set Support</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="registerScreenName">Screen Name / Stage Name (Optional)</label>
+          <input type="text" id="registerScreenName" placeholder="e.g., RK Visuals, AR Motion Lab">
+        </div>
+        <div class="form-group">
+          <label for="registerDisplayPreference">Display Preference</label>
+          <select id="registerDisplayPreference">
+            <option value="" selected disabled>Select Display Preference</option>
+            <option value="Show Real Name Only">Show Real Name Only</option>
+            <option value="Show Screen Name Only">Show Screen Name Only</option>
+            <option value="Show Both">Show Both (Name • Screen Name)</option>
+          </select>
+        </div>
+        <div class="wizard-nav-buttons">
+          <button type="button" class="wizard-btn-prev" id="registerBack1">← Back</button>
+          <button type="button" class="wizard-btn-next" id="registerNext2">Next Phase →</button>
+        </div>
       </div>
-      <div class="form-group">
-        <label for="registerConfirmPassword">Confirm Password</label>
-        <input type="password" id="registerConfirmPassword" placeholder="Re-enter password" required>
+
+      <!-- ── STEP 3: DEMOGRAPHICS & LOCATION ── -->
+      <div class="wizard-step" data-step="3">
+        <div class="form-group">
+          <label for="registerGender">Gender</label>
+          <select id="registerGender" class="profile-role-dropdown">
+            <option value="" selected disabled>Choose Gender</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+            <option value="Prefer not to say">Prefer not to say</option>
+          </select>
+        </div>
+        <div class="form-group" style="position: relative;">
+          <label for="registerCollege">College / University</label>
+          <input type="text" id="registerCollege" placeholder="e.g., FTII Pune" autocomplete="off">
+          <div id="collegeSuggestions" class="autocomplete-dropdown"></div>
+        </div>
+        <div class="form-group" style="position: relative;">
+          <label for="registerCity">City</label>
+          <input type="text" id="registerCity" placeholder="e.g., Mumbai" autocomplete="off">
+          <div id="citySuggestions" class="autocomplete-dropdown"></div>
+        </div>
+        <div class="wizard-nav-buttons">
+          <button type="button" class="wizard-btn-prev" id="registerBack2">← Back</button>
+          <button type="submit" class="wizard-btn-next" style="flex-grow: 1;">Create Account →</button>
+        </div>
       </div>
-      <div class="form-group">
-        <label for="registerRole">Your Role</label>
-        <select id="registerRole">
-          <option value="" selected disabled>Select Role</option>
-          <option value="Director">Director</option>
-          <option value="Cinematographer / DP">Cinematographer / DP</option>
-          <option value="Writer">Writer</option>
-          <option value="Editor">Editor</option>
-          <option value="Sound Designer">Sound Designer</option>
-          <option value="Designer">Designer</option>
-          <option value="Actor">Actor</option>
-          <option value="Producer">Producer</option>
-          <option value="Lighting Crew">Lighting Crew</option>
-          <option value="Set Support">Set Support</option>
-          <option value="Other">Other</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label for="registerScreenName">Screen Name / Stage Name (Optional)</label>
-        <input type="text" id="registerScreenName" placeholder="e.g., RK Visuals, AR Motion Lab">
-      </div>
-      <div class="form-group">
-        <label for="registerDisplayPreference">Display Preference</label>
-        <select id="registerDisplayPreference">
-          <option value="" selected disabled>Select Display Preference</option>
-          <option value="Show Real Name Only">Show Real Name Only</option>
-          <option value="Show Screen Name Only">Show Screen Name Only</option>
-          <option value="Show Both">Show Both (Name • Screen Name)</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label for="registerGender">Gender</label>
-        <select id="registerGender" class="profile-role-dropdown">
-          <option value="" selected disabled>Choose Gender</option>
-          <option value="Male">Male</option>
-          <option value="Female">Female</option>
-          <option value="Other">Other</option>
-          <option value="Prefer not to say">Prefer not to say</option>
-        </select>
-      </div>
-      <div class="form-group" style="position: relative;">
-        <label for="registerCollege">College / University</label>
-        <input type="text" id="registerCollege" placeholder="e.g., FTII Pune" autocomplete="off">
-        <div id="collegeSuggestions" class="autocomplete-dropdown"></div>
-      </div>
-      <div class="form-group" style="position: relative;">
-        <label for="registerCity">City</label>
-        <input type="text" id="registerCity" placeholder="e.g., Mumbai" autocomplete="off">
-        <div id="citySuggestions" class="autocomplete-dropdown"></div>
-      </div>
-      <button type="submit" class="form-submit">Create Account →</button>
     </form>
     <div class="form-footer">
       Already have an account? <a id="backToLoginLink">Sign in</a>
@@ -713,8 +776,11 @@
     <script src="/scripts/components/navbar.js" defer></script>
     <script src="/scripts/animations/common.js" defer></script>
     <script src="/scripts/utils/user.js" defer></script>
+    <script src="/scripts/components/submission-helper.js" defer></script>
     <script src="/scripts/pages/project.js" defer></script>
     <script src="/scripts/components/global-chat-fab.js" defer></script>
+    <script src="/scripts/components/register-wizard.js" defer></script>
+    <script src="/scripts/components/onboarding.js" defer></script>
    
 </body>
 
