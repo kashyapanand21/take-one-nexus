@@ -1148,13 +1148,69 @@ section {
   min-height: 320px;
 }
 
-.deck-preview::before {
+.deck-preview::after {
   content: '';
   position: absolute;
   inset: 22px;
   border: 1px solid rgba(0, 212, 255, 0.14);
   pointer-events: none;
+  z-index: 1;
 }
+
+.work-showcase-card,
+.crew-finder-card,
+.collaboration-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.work-showcase-card::before,
+.crew-finder-card::before,
+.collaboration-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0.25;
+  filter: brightness(0.55) contrast(1.05);
+  z-index: 0;
+  transform: scale(1.02);
+  transition: background-image 0.4s ease-in-out;
+}
+
+.work-showcase-card::before {
+  background-image: linear-gradient(
+    to bottom,
+    rgba(3, 6, 12, 0.72),
+    rgba(3, 6, 12, 0.88)
+  ), url("/assets/images/work-showcase.jpg");
+}
+
+.crew-finder-card::before {
+  background-image: linear-gradient(
+    to bottom,
+    rgba(3, 6, 12, 0.72),
+    rgba(3, 6, 12, 0.88)
+  ), url("/assets/images/crew-finder.jpg");
+}
+
+.collaboration-card::before {
+  background-image: linear-gradient(
+    to bottom,
+    rgba(3, 6, 12, 0.72),
+    rgba(3, 6, 12, 0.88)
+  ), url("/assets/images/collaboration-request.jpg");
+}
+
+.work-showcase-card > *,
+.crew-finder-card > *,
+.collaboration-card > * {
+  position: relative;
+  z-index: 2;
+}
+
 
 .deck-preview-label {
   position: relative;

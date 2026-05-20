@@ -926,7 +926,20 @@ document.getElementById('productionStages')?.addEventListener('click', (event) =
   const copy = STAGE_COPY[button.dataset.stage] || STAGE_COPY.script;
   updateText('deckPreviewTitle', copy.title);
   updateText('deckPreviewText', copy.text);
+
+  const deckPreview = document.getElementById('deckPreview');
+  if (deckPreview) {
+    deckPreview.classList.remove('work-showcase-card', 'crew-finder-card', 'collaboration-card');
+    if (button.dataset.stage === 'script') {
+      deckPreview.classList.add('work-showcase-card');
+    } else if (button.dataset.stage === 'crew') {
+      deckPreview.classList.add('crew-finder-card');
+    } else if (button.dataset.stage === 'request') {
+      deckPreview.classList.add('collaboration-card');
+    }
+  }
 });
+
 
 async function loadHomepageData() {
   if (typeof API === 'undefined' || !API.home) return;
