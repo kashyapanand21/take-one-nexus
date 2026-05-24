@@ -18,6 +18,8 @@ interface Issue {
   screenshot: string | null;
   status: string;
   created_at: string;
+  platform_source: string;
+  issue_type: string | null;
   user: IssueUser | null;
 }
 
@@ -26,6 +28,7 @@ export default function AdminIssuesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState('all');
+  const [sourceFilter, setSourceFilter] = useState('all');
 
   const fetchIssues = async () => {
     try {
@@ -83,8 +86,9 @@ export default function AdminIssuesPage() {
   };
 
   const filteredIssues = issues.filter(issue => {
-    if (filter === 'all') return true;
-    return issue.status === filter;
+    const matchesStatus = filter === 'all' || issue.status === filter;
+    const matchesSource = sourceFilter === 'all' || issue.platform_source === sourceFilter;
+    return matchesStatus && matchesSource;
   });
 
   if (loading) {
@@ -102,11 +106,21 @@ export default function AdminIssuesPage() {
         <p className="page-subtitle">Platform Diagnostics and User Reports</p>
       </div>
 
-      <div style={{ marginBottom: '20px', display: 'flex', gap: '10px' }}>
-        <button className={`btn-action ${filter === 'all' ? 'active' : ''}`} onClick={() => setFilter('all')}>All</button>
-        <button className={`btn-action ${filter === 'open' ? 'active' : ''}`} onClick={() => setFilter('open')}>Open</button>
-        <button className={`btn-action ${filter === 'In Progress' ? 'active' : ''}`} onClick={() => setFilter('In Progress')}>In Progress</button>
-        <button className={`btn-action ${filter === 'Resolved' ? 'active' : ''}`} onClick={() => setFilter('Resolved')}>Resolved</button>
+      <div style={{ marginBottom: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <span style={{ fontSize: '11px', letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--silver)', marginRight: '8px' }}>Status:</span>
+          <button className={`btn-action ${filter === 'all' ? 'active' : ''}`} onClick={() => setFilter('all')}>All</button>
+          <button className={`btn-action ${filter === 'open' ? 'active' : ''}`} onClick={() => setFilter('open')}>Open</button>
+          <button className={`btn-action ${filter === 'In Progress' ? 'active' : ''}`} onClick={() => setFilter('In Progress')}>In Progress</button>
+          <button className={`btn-action ${filter === 'Resolved' ? 'active' : ''}`} onClick={() => setFilter('Resolved')}>Resolved</button>
+        </div>
+        
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <span style={{ fontSize: '11px', letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--silver)', marginRight: '8px' }}>Source:</span>
+          <button className={`btn-action ${sourceFilter === 'all' ? 'active' : ''}`} onClick={() => setSourceFilter('all')}>All Platforms</button>
+          <button className={`btn-action ${sourceFilter === 'main-website' ? 'active' : ''}`} onClick={() => setSourceFilter('main-website')}>Main Website</button>
+          <button className={`btn-action ${sourceFilter === 'scripts-platform' ? 'active' : ''}`} onClick={() => setSourceFilter('scripts-platform')}>Scripts Platform</button>
+        </div>
       </div>
 
       <div className="admin-table-container">
@@ -114,6 +128,7 @@ export default function AdminIssuesPage() {
           <thead>
             <tr>
               <th>ID</th>
+              <th>Platform Source</th>
               <th>Report</th>
               <th>Reporter</th>
               <th>Severity</th>
@@ -127,11 +142,32 @@ export default function AdminIssuesPage() {
               <tr key={issue.id}>
                 <td style={{ color: 'var(--silver)' }}>#{issue.id}</td>
                 <td>
+                  <span className="role-badge" style={{
+                    borderColor: issue.platform_source === 'scripts-platform' ? 'var(--neon)' : 'var(--cyan)',
+                    color: issue.platform_source === 'scripts-platform' ? 'var(--neon)' : 'var(--cyan)',
+                    boxShadow: issue.platform_source === 'scripts-platform' ? '0 0 8px rgba(255, 77, 26, 0.15)' : 'none'
+                  }}>
+                    {issue.platform_source === 'scripts-platform' ? 'SCRIPTS PLATFORM' : 'MAIN WEBSITE'}
+                  </span>
+                </td>
+                <td>
                   <div style={{ fontWeight: 'bold' }}>{issue.title}</div>
                   <div style={{ fontSize: '12px', color: 'var(--silver)', marginTop: '4px', maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {issue.description}
                   </div>
-                  {issue.location && <div style={{ fontSize: '10px', color: 'var(--cyan)' }}>Path: {issue.location}</div>}
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginTop: '6px' }}>
+                    {issue.issue_type && (
+                      <span style={{ fontSize: '10px', color: 'var(--amber)', background: 'rgba(255, 166, 32, 0.1)', padding: '1px 6px', borderRadius: '4px' }}>
+                        Type: {issue.issue_type}
+                      </span>
+                    )}
+                    {issue.location && <div style={{ fontSize: '10px', color: 'var(--cyan)' }}>Path: {issue.location}</div>}
+                    {issue.screenshot && (
+                      <a href={issue.screenshot} target="_blank" rel="noreferrer" style={{ fontSize: '10px', color: 'var(--cyan)', textDecoration: 'underline' }}>
+                        View Screenshot
+                      </a>
+                    )}
+                  </div>
                 </td>
                 <td>
                   {issue.user ? (
@@ -145,8 +181,10 @@ export default function AdminIssuesPage() {
                 </td>
                 <td>
                   <span className="role-badge" style={{ 
-                    borderColor: issue.severity === 'high' ? 'red' : 'var(--neon)',
-                    color: issue.severity === 'high' ? 'red' : 'var(--neon)'
+                    borderColor: issue.severity === 'critical' ? '#ff003c' : issue.severity === 'high' ? 'red' : issue.severity === 'medium' ? 'var(--neon)' : 'var(--silver)',
+                    color: issue.severity === 'critical' ? '#ff003c' : issue.severity === 'high' ? 'red' : issue.severity === 'medium' ? 'var(--neon)' : 'var(--silver)',
+                    boxShadow: issue.severity === 'critical' ? '0 0 8px rgba(255, 0, 60, 0.4)' : 'none',
+                    fontWeight: issue.severity === 'critical' ? 'bold' : 'normal'
                   }}>
                     {issue.severity.toUpperCase()}
                   </span>

@@ -30,13 +30,15 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Title and description are required' });
     }
 
-    const issue = await prisma.issue.create({
+        const issue = await prisma.issue.create({
       data: {
         title,
         description,
         location,
         severity: severity || 'low',
         screenshot,
+        platform_source: req.body.platform_source || 'main-website',
+        issue_type: req.body.issue_type || null,
         user_id: req.user ? req.user.id : null // If auth middleware was used
       }
     });

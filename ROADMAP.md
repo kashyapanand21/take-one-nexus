@@ -22,7 +22,7 @@ Welcome to the TAKE ONE Nexus Roadmap! This document outlines our strategic visi
 - [x] **Verified Account Badge**: Neon ✦ badge displayed across Leaderboard, Profile, and Crew Finder for creators with `email_verified = true`.
 - [x] **Script Moderation Pipeline**: Admin-only `PATCH /api/scripts/:id/moderate` endpoint with approval status tracking, automated rejection emails, and Pusher real-time events.
 - [x] **Issue Admin Controls**: Issues now support `priority`, `assigned_admin`, and `resolved_at` for full triage lifecycle management.
-- [x] **Scripts Review Platform** (`scripts-platform/`): Standalone Next.js admin dashboard at `scripts.takeone-nexus.net.in` with JWT-isolated auth, script queue, PDF review, and issue management.
+- [x] **Scripts Review Platform** (`scripts-platform/`): Standalone Next.js admin dashboard at `scripts.takeone-nexus.net.in` with JWT-isolated auth, script queue, PDF review, and decoupled multi-platform issue ingestion pipelines.
 
 ## 🔵 Phase 3: The AI Production Board (Upcoming)
 - [ ] **AI-Powered Crew Matching**: Algorithmic suggestions connecting directors with the ideal cinematographers, editors, and sound engineers based on past projects and skills.

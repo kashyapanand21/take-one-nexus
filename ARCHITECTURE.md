@@ -34,14 +34,12 @@ Due to the transition from a purely static/Express application to a modern Next.
   | Route | Purpose |
   |---|---|
   | `/login` | Admin-only login (bcrypt verify, role-gated to Admin/Developer) |
-  | `/dashboard` | Live stats grid + recent submissions & issues |
+  | `/dashboard` | Live script moderation stats grid (Pending, Approved, Rejected, Creators) + recent submissions |
   | `/scripts` | Filterable moderation queue (pending / approved / rejected) |
   | `/scripts/[id]` | Full script review: PDF iframe, moderator notes, approve/reject/reset |
-  | `/issues` | Issue triage with status transitions (open → in_progress → resolved) |
   | `GET /api/scripts` | Internal API: script list filtered by `approval_status` |
   | `PATCH /api/scripts/[id]/moderate` | Apply moderation action + send rejection email |
-  | `GET /api/issues` | Internal API: issue list filtered by `status` |
-  | `PATCH /api/issues/[id]` | Update issue status / priority / assigned_admin |
+  | `POST /api/issues` | Public/Authenticated standalone bug ingestion pipeline for local environment reporting |
 
 ### B. Legacy Express Server (`server.js`)
 - **Purpose**: Core REST API for data mutations. Serves legacy static `.htm` pages (`/public`).

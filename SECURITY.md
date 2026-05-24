@@ -40,5 +40,6 @@ To maintain a secure ecosystem, we adhere to the following practices:
 - **Security Headers**: Strict Content Security Policy (CSP), anti-clickjacking (X-Frame-Options: DENY), and strict referrer policies are enforced globally. The scripts-platform also sets its own `X-Frame-Options: DENY` and `X-Content-Type-Options: nosniff` headers.
 - **XSS Prevention**: React/Next.js automatically sanitizes inputs, and we strictly validate HTML rendered on static routes.
 - **Crawl Protection**: The scripts-platform sets `robots: noindex, nofollow` in its metadata to prevent indexing of the internal moderation tool.
+- **Multi-Platform Ingestion Security**: Independent issue reporting modals sanitise text descriptions and scrub input before dispatching telemetry to the database. Standalone routes validate request payloads and restrict admin triage commands exclusively to active admin roles.
 
 Thank you for helping us keep TAKE ONE Nexus secure!
