@@ -107,6 +107,7 @@ router.get('/analytics', authenticateUser, requireRole(['Admin', 'Developer', 'M
       SELECT DATE(CONVERT_TZ(created_at, '+00:00', '+05:30')) as date, COUNT(*) as count 
       FROM scripts 
       WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+        AND payment_verified = TRUE
       GROUP BY DATE(CONVERT_TZ(created_at, '+00:00', '+05:30'))
       ORDER BY date ASC
     `);
@@ -133,7 +134,7 @@ router.get('/analytics', authenticateUser, requireRole(['Admin', 'Developer', 'M
 router.get('/stats', authenticateUser, requireRole(['Admin', 'Developer', 'Moderator']), async (req, res) => {
   try {
     const [userCount] = await pool.query('SELECT COUNT(*) as count FROM users');
-    const [scriptCount] = await pool.query('SELECT COUNT(*) as count FROM scripts');
+    const [scriptCount] = await pool.query('SELECT COUNT(*) as count FROM scripts WHERE payment_verified = TRUE');
     const [requestCount] = await pool.query('SELECT COUNT(*) as count FROM collaboration_requests');
     
     // Aggregate issue tracking statistics

@@ -178,74 +178,62 @@ async function uploadWork() {
         const { order_id, draft_id, amount, currency, key_id, is_simulated } = orderRes;
 
         if (is_simulated) {
-            // ── SIMULATED CHECKOUT (dev / placeholder keys) ──────────────
-            if (submitBtn) submitBtn.textContent = 'Simulating Payment...';
-            await new Promise(r => setTimeout(r, 1200));
-
-            const verifyRes = await API.payments.verify({
-                razorpay_order_id: order_id,
-                razorpay_payment_id: `pay_sim_${Date.now()}`,
-                razorpay_signature: 'simulated_signature',
-                draft_id
-            });
-
-            if (!verifyRes.success) throw new Error(verifyRes.message || 'Verification failed');
-
-            showTransmissionAccepted(payload.title);
-            renderDynamicUploadForm(user);
-        } else {
-            // ── LIVE RAZORPAY CHECKOUT ────────────────────────────────────
-            if (submitBtn) submitBtn.textContent = 'Opening Payment...';
-
-            await new Promise((resolve, reject) => {
-                const options = {
-                    key: key_id,
-                    amount,
-                    currency,
-                    name: 'TAKE ONE',
-                    description: `Script Submission: ${payload.title}`,
-                    image: '/assets/logo-icon.png',
-                    order_id,
-                    theme: { color: '#ff4d1a' },
-                    modal: {
-                        ondismiss() {
-                            reject(new Error('Payment dismissed by user'));
-                        }
-                    },
-                    handler: async function(rzpResponse) {
-                        try {
-                            if (submitBtn) submitBtn.textContent = 'Verifying...';
-                            const verifyRes = await API.payments.verify({
-                                razorpay_order_id: rzpResponse.razorpay_order_id,
-                                razorpay_payment_id: rzpResponse.razorpay_payment_id,
-                                razorpay_signature: rzpResponse.razorpay_signature,
-                                draft_id
-                            });
-                            if (!verifyRes.success) throw new Error(verifyRes.message || 'Verification failed');
-                            showTransmissionAccepted(payload.title);
-                            renderDynamicUploadForm(user);
-                            resolve();
-                        } catch (verifyErr) {
-                            reject(verifyErr);
-                        }
-                    }
-                };
-
-                if (typeof Razorpay === 'undefined') {
-                    reject(new Error('Razorpay SDK not loaded'));
-                    return;
-                }
-
-                const rzp = new Razorpay(options);
-                rzp.on('payment.failed', function(resp) {
-                    reject(new Error(resp.error?.description || 'Payment failed'));
-                });
-                rzp.open();
-            });
+            throw new Error('Payment gateway unavailable. Script was not submitted.');
         }
+
+        if (submitBtn) submitBtn.textContent = 'Opening Payment...';
+
+        await new Promise((resolve, reject) => {
+            const options = {
+                key: key_id,
+                amount,
+                currency,
+                name: 'TAKE ONE',
+                description: `Script Submission: ${payload.title}`,
+                image: '/assets/logo-icon.png',
+                order_id,
+                theme: { color: '#ff4d1a' },
+                modal: {
+                    ondismiss() {
+                        API.payments.cancel({ draft_id, razorpay_order_id: order_id }).catch(() => {});
+                        reject(new Error('UPLOAD CANCELLED'));
+                    }
+                },
+                handler: async function(rzpResponse) {
+                    try {
+                        if (submitBtn) submitBtn.textContent = 'Verifying...';
+                        const verifyRes = await API.payments.verify({
+                            razorpay_order_id: rzpResponse.razorpay_order_id,
+                            razorpay_payment_id: rzpResponse.razorpay_payment_id,
+                            razorpay_signature: rzpResponse.razorpay_signature,
+                            draft_id
+                        });
+                        if (!verifyRes.success) throw new Error(verifyRes.message || 'PAYMENT FAILED — SCRIPT NOT SUBMITTED');
+                        showTransmissionAccepted(payload.title);
+                        renderDynamicUploadForm(user);
+                        resolve();
+                    } catch (verifyErr) {
+                        reject(verifyErr);
+                    }
+                }
+            };
+
+            if (typeof Razorpay === 'undefined') {
+                API.payments.cancel({ draft_id, razorpay_order_id: order_id }).catch(() => {});
+                reject(new Error('Razorpay SDK not loaded'));
+                return;
+            }
+
+            const rzp = new Razorpay(options);
+            rzp.on('payment.failed', function(resp) {
+                API.payments.cancel({ draft_id, razorpay_order_id: order_id }).catch(() => {});
+                reject(new Error(resp.error?.description || 'PAYMENT FAILED — SCRIPT NOT SUBMITTED'));
+            });
+            rzp.open();
+        });
     } catch (err) {
-        if (err.message === 'Payment dismissed by user') {
-            showToast('Payment cancelled. Your draft has been saved.');
+        if (err.message === 'UPLOAD CANCELLED') {
+            showToast('UPLOAD CANCELLED');
         } else {
             console.error('Upload/payment error:', err.message);
             showTransmissionLost(err.message, () => uploadWork());

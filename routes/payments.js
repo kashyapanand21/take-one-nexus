@@ -38,18 +38,28 @@ async function safeQuery(sql, params = []) {
 router.post('/create-order', authenticateUser, async (req, res) => {
   try {
     const userId = req.user.id;
-    const { title, genre, synopsis, poster_url, roles_needed, status, media_links, role_data, work_type } = req.body;
+    const { title, genre, synopsis, poster_url, roles_needed, status, media_links, role_data, work_type, temp_path } = req.body;
 
     if (!title) {
       return res.status(400).json({ success: false, message: 'Script title is required' });
+    }
+
+    const keyId = process.env.RAZORPAY_KEY_ID || '';
+    const keySecret = process.env.RAZORPAY_KEY_SECRET || '';
+
+    if (!keyId || !keySecret || keyId.startsWith('rzp_test_placeholder')) {
+      return res.status(503).json({
+        success: false,
+        message: 'Payment gateway is not configured. Script was not submitted.'
+      });
     }
 
     // 1. Create draft in script_drafts
     const draftResult = await safeQuery(
       `INSERT INTO script_drafts (
         user_id, title, genre, synopsis, poster_url, roles_needed, 
-        status, media_links, role_data, work_type, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+        status, media_links, role_data, work_type, temp_path, metadata, expires_at, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 24 HOUR), NOW(), NOW())`,
       [
         userId,
         title,
@@ -60,7 +70,14 @@ router.post('/create-order', authenticateUser, async (req, res) => {
         status || 'Open for collaboration',
         media_links || null,
         role_data || null,
-        work_type || 'Script'
+        work_type || 'Script',
+        temp_path || null,
+        JSON.stringify({
+          title,
+          genre: genre || 'General',
+          work_type: work_type || 'Script',
+          created_from: 'payment_order'
+        })
       ]
     );
 
@@ -69,53 +86,41 @@ router.post('/create-order', authenticateUser, async (req, res) => {
     // 2. Setup Razorpay order parameters
     const amount = 4900; // Rs 49.00 in paise
     const currency = 'INR';
-    const keyId = process.env.RAZORPAY_KEY_ID || '';
-    const keySecret = process.env.RAZORPAY_KEY_SECRET || '';
-
-    // Check if we should use Simulated Mode
-    const isSimulated = !keyId || keyId.startsWith('rzp_test_placeholder') || !keySecret;
-
     let orderId = '';
 
-    if (isSimulated) {
-      // Generate a mock order ID
-      orderId = `order_sim_${crypto.randomBytes(8).toString('hex')}`;
-      console.log(`[Payments] Simulated order created for Draft #${draftId}: ${orderId}`);
-    } else {
-      // Call Razorpay API to create actual order
-      try {
-        const response = await fetch('https://api.razorpay.com/v1/orders', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Basic ' + Buffer.from(`${keyId}:${keySecret}`).toString('base64')
-          },
-          body: JSON.stringify({
-            amount,
-            currency,
-            receipt: `draft_${draftId}`,
-            notes: {
-              userId: String(userId),
-              draftId: String(draftId)
-            }
-          })
-        });
+    try {
+      const response = await fetch('https://api.razorpay.com/v1/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Basic ' + Buffer.from(`${keyId}:${keySecret}`).toString('base64')
+        },
+        body: JSON.stringify({
+          amount,
+          currency,
+          receipt: `draft_${draftId}`,
+          notes: {
+            userId: String(userId),
+            draftId: String(draftId)
+          }
+        })
+      });
 
-        const orderData = await response.json();
+      const orderData = await response.json();
 
-        if (!response.ok || !orderData.id) {
-          throw new Error(orderData.error?.description || 'Razorpay order creation failed');
-        }
-
-        orderId = orderData.id;
-      } catch (razorpayError) {
-        console.error('[Payments] Razorpay API Error:', razorpayError.message);
-        captureError(razorpayError, { action: 'razorpay_order_creation_failed', extra: { draftId, userId } });
-        
-        // Fallback to simulated mode so service is not completely broken
-        orderId = `order_sim_${crypto.randomBytes(8).toString('hex')}`;
-        console.warn('[Payments] Falling back to Simulated Order ID due to Razorpay API error.');
+      if (!response.ok || !orderData.id) {
+        throw new Error(orderData.error?.description || 'Razorpay order creation failed');
       }
+
+      orderId = orderData.id;
+    } catch (razorpayError) {
+      await safeQuery('DELETE FROM script_drafts WHERE id = ? AND user_id = ?', [draftId, userId]);
+      console.error('[Payments] Razorpay API Error:', razorpayError.message);
+      captureError(razorpayError, { action: 'razorpay_order_creation_failed', extra: { draftId, userId } });
+      return res.status(502).json({
+        success: false,
+        message: 'PAYMENT FAILED — SCRIPT NOT SUBMITTED'
+      });
     }
 
     // 3. Save pending payment record
@@ -132,8 +137,8 @@ router.post('/create-order', authenticateUser, async (req, res) => {
       draft_id: draftId,
       amount,
       currency,
-      key_id: isSimulated ? 'rzp_test_placeholder' : keyId,
-      is_simulated: isSimulated || orderId.startsWith('order_sim_')
+      key_id: keyId,
+      is_simulated: false
     });
 
   } catch (error) {
@@ -152,25 +157,29 @@ router.post('/verify', authenticateUser, async (req, res) => {
     const userId = req.user.id;
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature, draft_id } = req.body;
 
-    if (!razorpay_order_id || !draft_id) {
-      return res.status(400).json({ success: false, message: 'Missing order ID or draft ID' });
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !draft_id) {
+      return res.status(400).json({ success: false, message: 'Missing payment verification fields' });
     }
 
-    // Check if this was a simulated transaction
-    const isSimulated = razorpay_order_id.startsWith('order_sim_');
+    const keySecret = process.env.RAZORPAY_KEY_SECRET || '';
+    if (!keySecret) {
+      return res.status(503).json({ success: false, message: 'Payment verification is not configured' });
+    }
 
-    if (!isSimulated) {
-      // Verify signature using crypto
-      const keySecret = process.env.RAZORPAY_KEY_SECRET || '';
-      const generatedSignature = crypto
-        .createHmac('sha256', keySecret)
-        .update(`${razorpay_order_id}|${razorpay_payment_id}`)
-        .digest('hex');
+    const generatedSignature = crypto
+      .createHmac('sha256', keySecret)
+      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+      .digest('hex');
 
-      if (generatedSignature !== razorpay_signature) {
-        console.warn(`[Payments] Invalid signature for Order: ${razorpay_order_id}`);
-        return res.status(400).json({ success: false, message: 'Payment verification failed: Invalid signature' });
-      }
+    if (generatedSignature !== razorpay_signature) {
+      console.warn(`[Payments] Invalid signature for Order: ${razorpay_order_id}`);
+      await safeQuery(
+        `UPDATE script_upload_payments SET status = 'failed', razorpay_payment_id = ?, razorpay_signature = ?, updated_at = NOW()
+         WHERE razorpay_order_id = ? AND user_id = ?`,
+        [razorpay_payment_id, razorpay_signature, razorpay_order_id, userId]
+      );
+      await safeQuery('DELETE FROM script_drafts WHERE id = ? AND user_id = ?', [draft_id, userId]);
+      return res.status(400).json({ success: false, message: 'PAYMENT FAILED — SCRIPT NOT SUBMITTED' });
     }
 
     // Start transaction to promote script safely
@@ -206,12 +215,22 @@ router.post('/verify', authenticateUser, async (req, res) => {
 
     const draft = drafts[0];
 
+    if (draft.expires_at && new Date(draft.expires_at).getTime() < Date.now()) {
+      await connection.query(
+        `UPDATE script_upload_payments SET status = 'failed', updated_at = NOW() WHERE id = ?`,
+        [paymentRecord.id]
+      );
+      await connection.query('DELETE FROM script_drafts WHERE id = ? AND user_id = ?', [draft_id, userId]);
+      await connection.commit();
+      return res.status(410).json({ success: false, message: 'UPLOAD CANCELLED' });
+    }
+
     // 3. Promote draft to scripts table
     const [insertResult] = await connection.query(
       `INSERT INTO scripts (
         user_id, title, genre, synopsis, poster_url, roles_needed, 
-        status, media_links, role_data, work_type, approval_status, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW(), NOW())`,
+        status, media_links, role_data, work_type, approval_status, payment_status, payment_id, payment_verified, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 'paid', ?, TRUE, NOW(), NOW())`,
       [
         draft.user_id,
         draft.title,
@@ -222,7 +241,8 @@ router.post('/verify', authenticateUser, async (req, res) => {
         draft.status,
         draft.media_links,
         draft.role_data,
-        draft.work_type
+        draft.work_type,
+        razorpay_payment_id
       ]
     );
 
@@ -238,12 +258,14 @@ router.post('/verify', authenticateUser, async (req, res) => {
            updated_at = NOW() 
        WHERE id = ?`,
       [
-        razorpay_payment_id || `pay_sim_${crypto.randomBytes(8).toString('hex')}`,
-        razorpay_signature || 'simulated_signature',
+        razorpay_payment_id,
+        razorpay_signature,
         scriptId,
         paymentRecord.id
       ]
     );
+
+    await connection.query('DELETE FROM script_drafts WHERE id = ? AND user_id = ?', [draft_id, userId]);
 
     await connection.commit();
     console.log(`[Payments] Verification Successful! Draft #${draft_id} promoted to Script #${scriptId}`);
@@ -263,7 +285,7 @@ router.post('/verify', authenticateUser, async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Payment verified and script transmitted successfully',
+      message: 'TRANSMISSION ACCEPTED',
       script_id: scriptId
     });
 
@@ -274,6 +296,34 @@ router.post('/verify', authenticateUser, async (req, res) => {
     res.status(500).json({ success: false, message: 'Could not complete payment verification' });
   } finally {
     connection.release();
+  }
+});
+
+/**
+ * POST /api/payments/cancel
+ * Cancel a pending script draft after payment dismissal/failure.
+ */
+router.post('/cancel', authenticateUser, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { draft_id, razorpay_order_id } = req.body;
+
+    if (!draft_id) {
+      return res.status(400).json({ success: false, message: 'Missing draft id' });
+    }
+
+    await safeQuery(
+      `UPDATE script_upload_payments
+       SET status = 'failed', updated_at = NOW()
+       WHERE draft_id = ? AND user_id = ? ${razorpay_order_id ? 'AND razorpay_order_id = ?' : ''}`,
+      razorpay_order_id ? [draft_id, userId, razorpay_order_id] : [draft_id, userId]
+    );
+    await safeQuery('DELETE FROM script_drafts WHERE id = ? AND user_id = ?', [draft_id, userId]);
+
+    return res.json({ success: true, message: 'UPLOAD CANCELLED' });
+  } catch (error) {
+    console.error('Cancel payment error:', error.message);
+    return res.status(500).json({ success: false, message: 'Could not cancel upload' });
   }
 });
 

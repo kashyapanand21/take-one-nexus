@@ -64,7 +64,7 @@ router.post('/', authenticateUser, requireVerified, async (req, res) => {
         owners.email AS owner_email
        FROM scripts
        JOIN users AS owners ON owners.id = scripts.user_id
-       WHERE scripts.id = ?
+       WHERE scripts.id = ? AND scripts.payment_verified = TRUE
        LIMIT 1`,
       [script_id]
     );

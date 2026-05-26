@@ -344,6 +344,12 @@ const API = (() => {
           method: 'POST',
           body: JSON.stringify(payload)
         });
+      },
+      cancel(payload) {
+        return request('/api/payments/cancel', {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
       }
     },
     creators: {

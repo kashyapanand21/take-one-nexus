@@ -47,3 +47,10 @@ Welcome to the TAKE ONE Nexus Roadmap! This document outlines our strategic visi
 ---
 
 *Note: This roadmap is a living document. Features are subject to change based on community feedback and open-source contributions. Have an idea? Open an issue on GitHub!*
+
+## Critical Fixes Completed
+
+- [x] Block unpaid script records before database insertion.
+- [x] Verify Razorpay signatures on the backend before promotion from draft to script.
+- [x] Add script deletion for authorized moderators/admins with audit logging.
+- [x] Add admin task creation and approval/rejection credit flow.

@@ -81,3 +81,9 @@ TAKE ONE Nexus uses a highly specific **cinematic dark UI**.
 
 ---
 *By following these rules, we ensure TAKE ONE Nexus remains a robust, maintainable, and professional open-source project.*
+## Critical Fix Rules
+
+- Never trust a frontend payment success state. Verify Razorpay signatures on the backend before creating scripts.
+- Never expose unpaid scripts in public reads, moderation queues, or leaderboard-derived counts.
+- Never authorize destructive moderation actions from client-side role checks alone.
+- Log script deletion as `SCRIPT_DELETED` in `moderation_logs`.

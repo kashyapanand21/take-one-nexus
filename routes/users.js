@@ -70,7 +70,7 @@ async function getProfileData(userId) {
   const [scriptRows] = await pool.query(
     `SELECT id, title, genre, status, roles_needed, poster_url, created_at
      FROM scripts
-     WHERE user_id = ?
+     WHERE user_id = ? AND payment_verified = TRUE
      ORDER BY created_at DESC, id DESC`,
     [userId]
   );
@@ -649,7 +649,7 @@ router.get('/public/:id', async (req, res) => {
     const [scriptRows] = await pool.query(
       `SELECT id, title, genre, synopsis, status, roles_needed, poster_url, work_type, media_links, role_data, created_at
        FROM scripts
-       WHERE user_id = ?
+       WHERE user_id = ? AND payment_verified = TRUE
        ORDER BY created_at DESC, id DESC`,
       [userId]
     );

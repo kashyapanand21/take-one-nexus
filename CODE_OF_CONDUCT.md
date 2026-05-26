@@ -31,3 +31,6 @@ Project maintainers who do not follow or enforce the Code of Conduct in good fai
 ## Attribution
 
 This Code of Conduct is adapted from the [Contributor Covenant](https://www.contributorcovenant.org), version 1.4, available at https://www.contributorcovenant.org/version/1/4/code-of-conduct.html
+## Platform Safety Note
+
+TAKE ONE moderators may remove scripts that violate policy or platform rules. Script deletion is handled through a backend-authorized flow and logged for accountability.

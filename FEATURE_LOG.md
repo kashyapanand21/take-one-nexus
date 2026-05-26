@@ -91,3 +91,10 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 ---
 
 *(For older legacy changes, refer to git commit history prior to May 2026)*
+
+## 2026-05-26 Critical Fixes
+
+- Added audited script deletion for moderators/admins with backend authorization and `SCRIPT_DELETED` logs.
+- Hardened script submission so only Razorpay-verified payments can promote drafts into `scripts`.
+- Added script payment status fields and filtered public script surfaces to paid, verified scripts.
+- Added `/admin` task creation plus backend task submission approval/rejection, manual credit awards, activity logs, and leaderboard refresh.

@@ -12,6 +12,13 @@ To elevate the quality of pitches on Take One Nexus, we replaced standard text f
 *   **Initialization**:
     The system hooks directly into the dynamic form renderer (`renderDynamicUploadForm`) inside [project.js](file:///Users/aarushgupta/Documents/Projects/take-one-nexus/public/scripts/pages/project.js). When a Director or Writer logs in and opens the Upload vision area, the helper automatically initialises the widgets and wraps standard inputs.
 
+## Payment Verification Lifecycle
+
+- The wizard submits metadata to `/api/payments/create-order`, which stores only a temporary `script_drafts` row.
+- Razorpay Checkout returns payment identifiers to the browser, but the browser result is not trusted.
+- `/api/payments/verify` validates the HMAC signature on the backend. Only then is the script promoted into `scripts`.
+- Failed payments show `PAYMENT FAILED — SCRIPT NOT SUBMITTED`; dismissed checkouts show `UPLOAD CANCELLED`; verified uploads show `TRANSMISSION ACCEPTED`.
+
 ---
 
 ## 🎨 1. Interactive Logline Builder

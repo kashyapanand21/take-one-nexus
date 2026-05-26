@@ -1,5 +1,5 @@
 const express = require('express');
-const { authenticateUser, requireVerified } = require('../middleware/auth');
+const { authenticateUser, requireVerified, requireAdmin } = require('../middleware/auth');
 const { body, param } = require('express-validator');
 const { validateRequest } = require('../middleware/validator');
 const { PrismaClient } = require('@prisma/client');
@@ -15,6 +15,196 @@ const pusher = new Pusher({
   secret: process.env.PUSHER_SECRET || '',
   cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER || '',
   useTLS: true
+});
+
+const adminTaskValidation = [
+  body('title').trim().notEmpty().withMessage('Task title is required').isLength({ max: 255 }),
+  body('description').optional().trim().isLength({ max: 2000 }),
+  body('credits').isInt({ min: 0 }).withMessage('Credits reward must be zero or higher'),
+  body('category').trim().notEmpty().withMessage('Category is required').isLength({ max: 100 }),
+  body('active').optional().isBoolean().withMessage('Active must be true or false'),
+  validateRequest
+];
+
+/**
+ * GET /api/tasks/admin/definitions
+ * Admin-only: list platform task definitions.
+ */
+router.get('/admin/definitions', authenticateUser, requireVerified, requireAdmin, async (req, res) => {
+  try {
+    const tasks = await prisma.task.findMany({
+      where: { conversation_id: null },
+      orderBy: { created_at: 'desc' },
+      include: {
+        submissions: {
+          select: { id: true, status: true, credits_awarded: true, user_id: true, created_at: true }
+        }
+      }
+    });
+
+    res.json({ success: true, data: tasks });
+  } catch (error) {
+    console.error('Admin task list error:', error.message);
+    res.status(500).json({ success: false, message: 'Could not load admin tasks' });
+  }
+});
+
+/**
+ * POST /api/tasks/admin/definitions
+ * Admin-only: create platform task definitions.
+ */
+router.post('/admin/definitions', authenticateUser, requireVerified, requireAdmin, adminTaskValidation, async (req, res) => {
+  try {
+    const { title, description, credits, category, active = true } = req.body;
+
+    const task = await prisma.task.create({
+      data: {
+        creator_id: Number(req.user.id),
+        title: title.trim(),
+        description: description?.trim() || null,
+        credits: Number(credits),
+        reward_credits: Number(credits),
+        category: category.trim(),
+        active: Boolean(active),
+        status: active ? 'Active' : 'Inactive',
+        approval_status: 'Pending'
+      }
+    });
+
+    if (process.env.PUSHER_APP_ID) {
+      pusher.trigger('admin-dashboard', 'update', {
+        type: 'ADMIN_TASK_CREATED',
+        task
+      });
+    }
+
+    res.status(201).json({ success: true, data: task });
+  } catch (error) {
+    console.error('Admin task create error:', error.message);
+    res.status(500).json({ success: false, message: 'Could not create task' });
+  }
+});
+
+/**
+ * GET /api/tasks/admin/submissions
+ * Admin-only: review task submissions.
+ */
+router.get('/admin/submissions', authenticateUser, requireVerified, requireAdmin, async (req, res) => {
+  try {
+    const submissions = await prisma.taskSubmission.findMany({
+      orderBy: { created_at: 'desc' },
+      include: {
+        task: true,
+        user: {
+          select: { id: true, name: true, email: true, credits: true }
+        }
+      }
+    });
+
+    res.json({ success: true, data: submissions });
+  } catch (error) {
+    console.error('Admin task submissions error:', error.message);
+    res.status(500).json({ success: false, message: 'Could not load task submissions' });
+  }
+});
+
+/**
+ * POST /api/tasks/admin/submissions/:id/approve
+ * Admin-only: approve task and allot credits manually.
+ */
+router.post('/admin/submissions/:id/approve', authenticateUser, requireVerified, requireAdmin, [
+  param('id').isNumeric().withMessage('Invalid submission ID'),
+  body('credits').optional().isInt({ min: 0 }).withMessage('Credits must be zero or higher'),
+  validateRequest
+], async (req, res) => {
+  try {
+    const submissionId = Number(req.params.id);
+
+    const submission = await prisma.taskSubmission.findUnique({
+      where: { id: submissionId },
+      include: { task: true }
+    });
+
+    if (!submission) {
+      return res.status(404).json({ success: false, message: 'Task submission not found' });
+    }
+
+    if (submission.status === 'approved') {
+      return res.status(400).json({ success: false, message: 'Task submission is already approved' });
+    }
+
+    const credits = Number(req.body.credits ?? submission.task.credits ?? submission.task.reward_credits ?? 0);
+
+    const [, updatedUser, transaction] = await prisma.$transaction([
+      prisma.taskSubmission.update({
+        where: { id: submissionId },
+        data: {
+          status: 'approved',
+          credits_awarded: credits
+        }
+      }),
+      prisma.user.update({
+        where: { id: submission.user_id },
+        data: { credits: { increment: credits } }
+      }),
+      prisma.creditTransaction.create({
+        data: {
+          user_id: submission.user_id,
+          amount: credits,
+          reason: `Task Approved: ${submission.task.title}`,
+          type: 'CREDIT'
+        }
+      })
+    ]);
+
+    if (process.env.PUSHER_APP_ID) {
+      pusher.trigger(`user-${submission.user_id}`, 'credit-update', {
+        credits: updatedUser.credits,
+        change: credits,
+        reason: submission.task.title
+      });
+      pusher.trigger('global-events', 'leaderboard-update', {});
+      pusher.trigger('admin-dashboard', 'update', {
+        type: 'ADMIN_TASK_APPROVED',
+        submissionId,
+        transactionId: transaction.id
+      });
+    }
+
+    res.json({ success: true, message: 'Task approved and credits awarded' });
+  } catch (error) {
+    console.error('Admin task approve error:', error.message);
+    res.status(500).json({ success: false, message: 'Could not approve task submission' });
+  }
+});
+
+/**
+ * POST /api/tasks/admin/submissions/:id/reject
+ * Admin-only: reject task submission.
+ */
+router.post('/admin/submissions/:id/reject', authenticateUser, requireVerified, requireAdmin, [
+  param('id').isNumeric().withMessage('Invalid submission ID'),
+  validateRequest
+], async (req, res) => {
+  try {
+    const submissionId = Number(req.params.id);
+    const submission = await prisma.taskSubmission.update({
+      where: { id: submissionId },
+      data: { status: 'rejected', credits_awarded: 0 }
+    });
+
+    if (process.env.PUSHER_APP_ID) {
+      pusher.trigger('admin-dashboard', 'update', {
+        type: 'ADMIN_TASK_REJECTED',
+        submissionId
+      });
+    }
+
+    res.json({ success: true, data: submission });
+  } catch (error) {
+    console.error('Admin task reject error:', error.message);
+    res.status(500).json({ success: false, message: 'Could not reject task submission' });
+  }
 });
 
 /**

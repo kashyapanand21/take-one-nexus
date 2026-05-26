@@ -25,6 +25,10 @@ The platform integrates a custom, lightweight vanilla JavaScript guided tour (`o
 | **01** | `header .logo` | **Nexus Hub** | Introduces the platform concept. |
 | **02** | `#guestHeroActions` | **Choose Your Pathway** | Highlights the split Creator vs Crew routes. |
 | **03** | `header nav a[href="#explore"]` | **Discover Projects** | Leads the guest to browsing scripts. |
+
+## Critical Flow Note
+
+Onboarding tasks can now be created from `/admin` with title, description, credits, category, and active state. Admin approval awards Nexus Credits and refreshes the leaderboard.
 | **04** | `#navCrewLink` | **Crew Finder** | Explains direct specialty search. |
 | **05** | `#loginBtn` | **Activate Your Signal** | Guides the guest to final registration. |
 

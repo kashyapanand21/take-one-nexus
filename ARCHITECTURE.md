@@ -274,3 +274,12 @@ To safely transition the Take One Nexus platform into a commercial creative ecos
 | ADR-007 | Token Hashing Strategy | SHA-256 of a 32-byte random token. Hash stored in DB. Raw token in email URL only. Prevents token enumeration from DB breach. |
 | ADR-008 | Secure Webhook Signature Validation | Webhook processing MUST cryptographically verify signatures using raw request buffers. Avoid parsed bodies to ensure security against signature spoofing. |
 | ADR-009 | Independent scripts-platform JWT | The scripts-platform uses a separate `SP_JWT_SECRET` and `sp_token` cookie, isolated from the main platform's auth session. This means a compromised main JWT cannot grant moderation access. |
+
+## Critical Fixes: Script Payments, Deletes, And Tasks
+
+- Script creation is draft-first: `/api/payments/create-order` stores only `script_drafts`; `/api/payments/verify` is the only promotion path into `scripts`.
+- Razorpay verification is backend-only with `crypto.createHmac("sha256", RAZORPAY_KEY_SECRET)`.
+- Public script surfaces filter to `payment_verified = TRUE`; failed/cancelled drafts do not enter moderation, public pages, or leaderboard counts.
+- `scripts` now carries `payment_status`, `payment_id`, and `payment_verified` so moderation queues can show Paid, Pending Payment, and Failed Payment badges.
+- Script deletion removes references, attempts local asset cleanup, refreshes caches, and writes `SCRIPT_DELETED` to `moderation_logs`.
+- Admin task definitions use `tasks.title`, `tasks.description`, `tasks.credits`, `tasks.category`, and `tasks.active`; review state lives in `task_submissions`.

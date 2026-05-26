@@ -117,7 +117,10 @@ INSERT INTO scripts (
   genre,
   synopsis,
   roles_needed,
-  status
+  status,
+  payment_status,
+  payment_id,
+  payment_verified
 ) VALUES
 (
   1,
@@ -125,7 +128,10 @@ INSERT INTO scripts (
   'Horror',
   'A student medium streams a final ritual that goes very wrong.',
   'Director, Sound Designer, Actor',
-  'Dir. Needed · 3 Roles Open'
+  'Dir. Needed · 3 Roles Open',
+  'paid',
+  'seed_payment_001',
+  TRUE
 ),
 (
   3,
@@ -133,7 +139,10 @@ INSERT INTO scripts (
   'Romance',
   'Two campus strangers leave notes in a dead letter box and never meet on time.',
   'Director, DP',
-  'Team Forming'
+  'Team Forming',
+  'paid',
+  'seed_payment_002',
+  TRUE
 ),
 (
   1,
@@ -141,7 +150,10 @@ INSERT INTO scripts (
   'Action',
   'A runner carrying stolen exam footage is chased across an empty city campus.',
   'Actor, Editor, Sound',
-  'Full Crew · Casting Open'
+  'Full Crew · Casting Open',
+  'paid',
+  'seed_payment_003',
+  TRUE
 ),
 (
   3,
@@ -149,7 +161,10 @@ INSERT INTO scripts (
   'Comedy',
   'A broke filmmaker crashes weddings for free food and finds a real story.',
   'DP, Actor',
-  'DP Needed'
+  'DP Needed',
+  'paid',
+  'seed_payment_004',
+  TRUE
 ),
 (
   3,
@@ -157,7 +172,10 @@ INSERT INTO scripts (
   'Thriller',
   'A missing reel of footage pulls a team back to an abandoned studio floor.',
   'Editor, Sound Designer',
-  'Complete Team'
+  'Complete Team',
+  'paid',
+  'seed_payment_005',
+  TRUE
 ),
 (
   1,
@@ -165,7 +183,10 @@ INSERT INTO scripts (
   'Romance',
   'Two ex-collaborators reunite to finish a film during the rains.',
   'Editor, Sound Designer',
-  'Editor + Sound Needed'
+  'Editor + Sound Needed',
+  'paid',
+  'seed_payment_006',
+  TRUE
 ),
 (
   3,
@@ -173,5 +194,8 @@ INSERT INTO scripts (
   'Horror',
   'A campus pirate radio station starts broadcasting tomorrow''s emergencies.',
   'All Crew Roles',
-  'All Roles Open'
+  'All Roles Open',
+  'paid',
+  'seed_payment_007',
+  TRUE
 );

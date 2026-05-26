@@ -54,7 +54,7 @@ async function safeQuery(sql, params = []) {
 router.get('/', async (req, res) => {
   try {
     const userCountRows = await safeQuery('SELECT COUNT(*) AS total FROM users');
-    const scriptCountRows = await safeQuery('SELECT COUNT(*) AS total FROM scripts');
+    const scriptCountRows = await safeQuery('SELECT COUNT(*) AS total FROM scripts WHERE payment_verified = TRUE');
     const collegeCountRows = await safeQuery(`
       SELECT COUNT(DISTINCT college) AS total
       FROM users
@@ -79,6 +79,7 @@ router.get('/', async (req, res) => {
         users.name AS author_name
       FROM scripts
       LEFT JOIN users ON users.id = scripts.user_id
+      WHERE scripts.payment_verified = TRUE
       ORDER BY created_at DESC, id DESC
       LIMIT 8
     `);

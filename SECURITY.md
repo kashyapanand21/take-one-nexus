@@ -43,3 +43,12 @@ To maintain a secure ecosystem, we adhere to the following practices:
 - **Multi-Platform Ingestion Security**: Independent issue reporting modals sanitise text descriptions and scrub input before dispatching telemetry to the database. Standalone routes validate request payloads and restrict admin triage commands exclusively to active admin roles.
 
 Thank you for helping us keep TAKE ONE Nexus secure!
+
+## Critical Fixes: Payment And Moderation Enforcement
+
+- `POST /api/scripts` no longer creates records; it returns `PAYMENT_REQUIRED`.
+- Razorpay checkout success is never trusted from the browser. `/api/payments/verify` validates the backend HMAC signature before creating a script.
+- Failed, cancelled, invalid, and expired payments delete the draft and do not enter public pages, moderation, or leaderboard counts.
+- Script deletion uses the verified session plus a fresh database role lookup. Elevated deletes require primary or secondary `admin`/`moderator`.
+- Script deletion is logged as `SCRIPT_DELETED` in `moderation_logs`.
+- Admin task approval writes a credit transaction and triggers user-credit and leaderboard refresh events.

@@ -54,6 +54,12 @@ To keep the repository clean and manageable, please use the following branch nam
 - `docs/what-you-documented` (For documentation updates)
 - `chore/update-dependencies` (For routine tasks)
 
+## Critical Fix Notes
+
+- Do not add any script creation path that inserts into `scripts` before `/api/payments/verify` succeeds.
+- Moderation delete UI must call the backend delete endpoint and must not rely on frontend role checks for authorization.
+- Admin task changes should preserve the minimal task fields: title, description, credits, category, and active.
+
 Example:
 ```bash
 git checkout -b feature/ai-crew-matching

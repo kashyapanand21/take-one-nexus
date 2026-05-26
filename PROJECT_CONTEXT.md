@@ -114,6 +114,13 @@ As the platform grows, we plan to decouple the monolithic architecture:
 4. **Rate Limiting at Scale**: Migrate in-memory rate limiters to Redis/Upstash when horizontal scaling is needed (`RATE_LIMIT_STORE` env var).
 5. **Secure Payment Gateway Infrastructure**: Deploying PCI-compliant gateway endpoints utilizing Stripe and Razorpay. This system will introduce idempotent transaction processing to avoid double charges, custom ledger audit trails in MySQL, and highly secure, signature-validated webhook controllers.
 
+## Critical Fixes: Current Enforcement
+
+- Script uploads are temporary drafts until Razorpay payment is verified server-side.
+- No script enters public pages, `scripts`, moderation, or leaderboard counts unless `payment_verified = TRUE`.
+- Admins and moderators can delete scripts through an audited backend flow.
+- The admin task system supports creation, approval, rejection, manual Nexus Credits, activity logs, and leaderboard updates.
+
 ---
 
 ## 🤝 Join the Production

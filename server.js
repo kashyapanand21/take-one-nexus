@@ -149,7 +149,7 @@ app.get('/api/leaderboard', async (req, res) => {
         COUNT(DISTINCT r.id) AS collaborations_count,
         (COUNT(DISTINCT s.id) * 10 + COUNT(DISTINCT r.id) * 5) AS credit_score
       FROM users u
-      LEFT JOIN scripts s ON s.user_id = u.id
+      LEFT JOIN scripts s ON s.user_id = u.id AND s.payment_verified = TRUE
       LEFT JOIN collaboration_requests r ON (r.requester_id = u.id OR r.owner_id = u.id) AND r.status = 'Accepted'
       GROUP BY u.id
       ORDER BY credit_score DESC
@@ -184,7 +184,7 @@ app.get('/api/creators', async (req, res) => {
         u.display_preference, u.email_verified,
         COUNT(DISTINCT s.id) AS scripts_count
       FROM users u
-      LEFT JOIN scripts s ON s.user_id = u.id
+      LEFT JOIN scripts s ON s.user_id = u.id AND s.payment_verified = TRUE
       GROUP BY u.id
       ORDER BY u.created_at DESC
       LIMIT 50
@@ -344,7 +344,7 @@ if (require.main === module || process.env.NODE_ENV !== 'production') {
     console.log('GET /api/health');
     console.log('GET /api/home');
     console.log('GET /api/scripts/search');
-    console.log('POST /api/scripts');
+    console.log('POST /api/scripts (payment verification required)');
     console.log('POST /api/requests');
     console.log('GET /api/requests/user/:id');
     console.log('POST /api/users/register');

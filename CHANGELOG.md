@@ -73,3 +73,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Initial project scaffold.
 - Basic TiDB integration.
 - Static UI shell (Project/Crew/Profile screens).
+
+## 2026-05-26
+
+- Blocked direct unpaid script creation and moved script submission behind backend Razorpay signature verification.
+- Added script draft cleanup for failed, cancelled, invalid, and expired payments.
+- Added audited script deletion with moderator/admin checks.
+- Added admin task creation controls and backend task submission approval/rejection with credit and leaderboard integration.

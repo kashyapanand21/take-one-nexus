@@ -24,6 +24,13 @@
   </p>
 </div>
 
+## Critical Fixes
+
+- Scripts now use a draft-first Razorpay flow and are created only after backend signature verification.
+- Direct `POST /api/scripts` creation is blocked until payment verification succeeds.
+- Moderators/admins can delete scripts through an audited backend flow.
+- Admins can create credit tasks from `/admin` and approve/reject submissions with manual Nexus Credits.
+
 ---
 
 ## 📽️ The Vision

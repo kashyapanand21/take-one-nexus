@@ -10,6 +10,12 @@ TAKE ONE Nexus is engineered for high-performance, real-time collaboration among
 
 ### 1. [Brand Clarity & Visual Hierarchy](HERO_CLARITY_SYSTEM.md)
 *   **Plain-English Messaging**: The strategic rationale behind *“Find your film crew. Share your scripts. Make your movie.”*
+
+## Critical Operations
+
+- Script submission: draft first, backend Razorpay verification second, script creation last.
+- Script deletion: backend-authorized, audited as `SCRIPT_DELETED`, and cleans references/assets where possible.
+- Tasks: admin-created definitions use `tasks`; user review state uses `task_submissions`; approval creates credit activity and updates the leaderboard.
 *   **Dual-Audience Entry**: Breakdown of split CTAs tailored specifically to *Creators* vs *Crew operatives*.
 *   **Cyberpunk Visual Guidelines**: Typography scales, neon tailwinds, HSL custom contrast, and cinematic layout parameters.
 
