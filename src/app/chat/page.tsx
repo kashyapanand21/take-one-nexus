@@ -1108,9 +1108,24 @@ export default function ChatPage() {
                             {dateMsgs.map((msg) => (
                               <div key={msg.id} className={`message-bubble ${msg.sender_id === user?.id ? 'sent' : 'received'} ${msg.status || ''}`}>
                                 {activeConv?.is_group && msg.sender_id !== user?.id && (
-                                  <div className="msg-sender-row">
+                                  <div className="msg-sender-row" style={{ display: 'flex', alignItems: 'center' }}>
                                     <span className="msg-sender-name">{getDisplayName(msg.sender)}</span>
                                     {msg.sender?.role && <span className="msg-role-badge">{msg.sender.role}</span>}
+                                    {['admin', 'developer'].includes(String(msg.sender?.role || '').toLowerCase()) && (
+                                      <span className="msg-director-badge" style={{
+                                        background: 'rgba(255, 77, 26, 0.15)',
+                                        border: '1px solid var(--neon)',
+                                        color: 'var(--neon)',
+                                        boxShadow: '0 0 5px rgba(255, 77, 26, 0.3)',
+                                        borderRadius: '4px',
+                                        padding: '1px 5px',
+                                        fontSize: '9px',
+                                        fontWeight: 'bold',
+                                        letterSpacing: '1px',
+                                        marginLeft: '6px',
+                                        textTransform: 'uppercase'
+                                      }}>Director</span>
+                                    )}
                                   </div>
                                 )}
                                 <div className="msg-content">
@@ -1264,6 +1279,74 @@ export default function ChatPage() {
                       />
                       <h4>{activeConv.is_group ? activeConv.name : (activeRecipient?.name || 'Crew Member')}</h4>
                       {!activeConv.is_group && <span className="details-role">{activeRecipient?.role || 'Crew Member'}</span>}
+                      
+                      {activeConv.is_group && (
+                        <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px', width: '100%', alignItems: 'flex-start' }}>
+                          <label style={{ fontSize: '11px', color: 'rgba(232,232,224,0.4)', textTransform: 'uppercase', letterSpacing: '1px' }}>Group Avatar URL</label>
+                          <div style={{ display: 'flex', gap: '6px', width: '100%' }}>
+                            <input 
+                              type="text" 
+                              placeholder="https://example.com/avatar.png"
+                              defaultValue={activeConv.avatar_url || ''}
+                              id="group-avatar-input"
+                              style={{
+                                flex: 1,
+                                background: 'rgba(0,0,0,0.3)',
+                                border: '1px solid rgba(232,232,224,0.1)',
+                                borderRadius: '4px',
+                                padding: '6px 8px',
+                                fontSize: '12px',
+                                color: '#e8e8e0',
+                                outline: 'none'
+                              }}
+                            />
+                            <button 
+                              onClick={async () => {
+                                const input = document.getElementById('group-avatar-input') as HTMLInputElement;
+                                if (!input) return;
+                                const newUrl = input.value.trim();
+                                
+                                try {
+                                  const token = localStorage.getItem('token') || document.cookie.match(/token=([^;]+)/)?.[1];
+                                  const res = await fetch(`/api/chat/conversations/${activeConv.id}/avatar`, {
+                                    method: 'PATCH',
+                                    headers: {
+                                      'Content-Type': 'application/json',
+                                      'Authorization': `Bearer ${token}`
+                                    },
+                                    body: JSON.stringify({ avatarUrl: newUrl })
+                                  });
+                                  const data = await res.json();
+                                  if (data.success) {
+                                    // Update state
+                                    setActiveConv(prev => prev ? { ...prev, avatar_url: newUrl } : null);
+                                    setConversations(prev => prev.map(c => c.id === activeConv.id ? { ...c, avatar_url: newUrl } : c));
+                                    alert('Group avatar updated successfully!');
+                                  } else {
+                                    alert(data.message || 'Failed to update group avatar');
+                                  }
+                                } catch (err) {
+                                  console.error('Avatar update failed:', err);
+                                  alert('Failed to update group avatar');
+                                }
+                              }}
+                              style={{
+                                background: 'var(--neon)',
+                                color: '#000',
+                                border: 'none',
+                                borderRadius: '4px',
+                                padding: '6px 12px',
+                                fontSize: '11px',
+                                fontWeight: 'bold',
+                                cursor: 'pointer',
+                                transition: 'all 0.3s ease'
+                              }}
+                            >
+                              Save
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     {activeConv.is_group ? (

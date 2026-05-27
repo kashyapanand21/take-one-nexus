@@ -5,38 +5,66 @@ const { authenticateUser, requireAdmin } = require('../middleware/auth');
 const router = express.Router();
 const prisma = new PrismaClient();
 
+const jwt = require('jsonwebtoken');
+
+function getOptionalUserId(req) {
+  let token = null;
+  const authHeader = req.headers.authorization || '';
+  if (authHeader.startsWith('Bearer ')) {
+    token = authHeader.slice(7);
+  }
+  if (!token && req.cookies) {
+    token = req.cookies.token;
+  }
+  if (!token) return null;
+  try {
+    const secret = process.env.JWT_SECRET || 'takeone_fallback_secret_32_chars_long';
+    const decoded = jwt.verify(token, secret);
+    if (decoded.exp && Date.now() >= decoded.exp * 1000) {
+      return null;
+    }
+    return decoded.id;
+  } catch (err) {
+    return null;
+  }
+}
+
 /**
  * GET /api/credits/tasks
  * Returns all active incentive tasks, plus completion status for the current user.
+ * Now supports optional auth so public leaderboard visitors can see tasks too.
  */
-router.get('/tasks', authenticateUser, async (req, res) => {
+router.get('/tasks', async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = getOptionalUserId(req);
 
-    const [tasks, completed] = await Promise.all([
-      prisma.creditTask.findMany({
-        where: { is_active: true },
-        orderBy: { credits_rewarded: 'desc' },
-        select: {
-          id: true,
-          name: true,
-          description: true,
-          credits_rewarded: true,
-          trigger_type: true,
-        }
-      }),
-      prisma.userCompletedTask.findMany({
+    const tasks = await prisma.creditTask.findMany({
+      where: { is_active: true },
+      orderBy: { credits_rewarded: 'desc' },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        credits_rewarded: true,
+        trigger_type: true,
+      }
+    });
+
+    let completedIds = new Set();
+    let completedList = [];
+
+    if (userId) {
+      completedList = await prisma.userCompletedTask.findMany({
         where: { user_id: userId },
         select: { task_id: true, credits_awarded: true, completed_at: true }
-      })
-    ]);
-
-    const completedIds = new Set(completed.map(c => c.task_id));
+      });
+      completedIds = new Set(completedList.map(c => c.task_id));
+    }
 
     const enrichedTasks = tasks.map(task => ({
       ...task,
       completed: completedIds.has(task.id),
-      completed_at: completed.find(c => c.task_id === task.id)?.completed_at || null,
+      completed_at: completedList.find(c => c.task_id === task.id)?.completed_at || null,
     }));
 
     return res.json({ success: true, data: enrichedTasks });

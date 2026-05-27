@@ -654,4 +654,67 @@ router.post('/conversations/:id/clear', authenticateUser, requireVerified, [
 });
 
 
+/**
+ * PATCH /api/chat/conversations/:id/avatar
+ * Update group conversation avatar
+ */
+router.patch('/conversations/:id/avatar', authenticateUser, requireVerified, [
+  param('id').isNumeric(),
+  body('avatarUrl').trim().notEmpty().withMessage('avatarUrl is required'),
+  validateRequest
+], async (req, res) => {
+  try {
+    const conversationId = Number(req.params.id);
+    const userId = Number(req.user.id);
+    const { avatarUrl } = req.body;
+
+    // Check if user is part of the conversation
+    const conversation = await prisma.conversation.findFirst({
+      where: {
+        id: conversationId,
+        members: { some: { user_id: userId } }
+      }
+    });
+
+    if (!conversation) {
+      return res.status(403).json({ success: false, message: 'Access denied' });
+    }
+
+    if (!conversation.is_group) {
+      return res.status(400).json({ success: false, message: 'Can only update group avatars' });
+    }
+
+    // Update conversation avatar
+    const updatedConversation = await prisma.conversation.update({
+      where: { id: conversationId },
+      data: { avatar_url: avatarUrl },
+      include: getConversationInclude()
+    });
+
+    const transformed = transformConversation(updatedConversation, userId);
+
+    // Broadcast the update via Pusher
+    pusher.trigger(`conversation-${conversationId}`, 'avatar-updated', {
+      conversationId,
+      avatar_url: avatarUrl
+    });
+
+    // Also notify all member channels
+    const members = await prisma.conversationMember.findMany({
+      where: { conversation_id: conversationId },
+      select: { user_id: true }
+    });
+
+    for (const member of members) {
+      pusher.trigger(`user-${member.user_id}-chats`, 'conversation-update', transformed);
+    }
+
+    res.json({ success: true, data: transformed });
+  } catch (error) {
+    console.error('Update avatar error:', error.message);
+    res.status(500).json({ success: false, message: 'Could not update group avatar' });
+  }
+});
+
+
 module.exports = router;

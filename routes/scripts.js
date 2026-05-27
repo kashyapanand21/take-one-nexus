@@ -395,6 +395,16 @@ router.patch('/:id/moderate', authenticateUser, requireRole(['Admin', 'Developer
 
     const script = rows[0];
 
+    // Award script approval credits if approved
+    if (action === 'approved' && script.user_id) {
+      try {
+        const { awardCreditTask } = require('../utils/seedCreditTasks');
+        await awardCreditTask(script.user_id, 'FIRST_SCRIPT_APPROVAL');
+      } catch (awardErr) {
+        console.error('Failed to award first approved script credits:', awardErr.message);
+      }
+    }
+
     // Send rejection email if the script was rejected and Resend is configured
     if (action === 'rejected' && script.author_email && process.env.RESEND_API_KEY) {
       try {

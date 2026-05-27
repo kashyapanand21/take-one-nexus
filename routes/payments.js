@@ -327,4 +327,33 @@ router.post('/cancel', authenticateUser, async (req, res) => {
   }
 });
 
+/**
+ * GET /api/payments/debug
+ * Securely verify the Razorpay gateway configuration state.
+ */
+router.get('/debug', authenticateUser, async (req, res) => {
+  try {
+    const keyId = process.env.RAZORPAY_KEY_ID || '';
+    const keySecret = process.env.RAZORPAY_KEY_SECRET || '';
+
+    const isKeyIdConfigured = !!keyId && !keyId.startsWith('rzp_test_placeholder');
+    const isKeySecretConfigured = !!keySecret && !keySecret.startsWith('rzp_test_placeholder');
+
+    return res.json({
+      success: true,
+      environment: process.env.NODE_ENV || 'development',
+      razorpay: {
+        configured: isKeyIdConfigured && isKeySecretConfigured,
+        key_id_set: isKeyIdConfigured,
+        key_secret_set: isKeySecretConfigured,
+        is_test_mode: keyId.includes('test')
+      }
+    });
+  } catch (error) {
+    console.error('Razorpay config debug failure:', error.message);
+    return res.status(500).json({ success: false, message: 'Failed to inspect configuration state securely.' });
+  }
+});
+
+
 module.exports = router;

@@ -111,6 +111,20 @@ function renderDynamicUploadForm(user) {
     }
 }
 
+function loadRazorpaySDK() {
+    return new Promise((resolve) => {
+        if (typeof Razorpay !== 'undefined') {
+            resolve(true);
+            return;
+        }
+        const script = document.createElement('script');
+        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        script.onload = () => resolve(true);
+        script.onerror = () => resolve(false);
+        document.body.appendChild(script);
+    });
+}
+
 async function uploadWork() {
     const user = API.auth.getUser();
     if (!user) {
@@ -182,6 +196,13 @@ async function uploadWork() {
         }
 
         if (submitBtn) submitBtn.textContent = 'Opening Payment...';
+
+        // Ensure Razorpay SDK is fully loaded
+        const sdkLoaded = await loadRazorpaySDK();
+        if (!sdkLoaded || typeof Razorpay === 'undefined') {
+            API.payments.cancel({ draft_id, razorpay_order_id: order_id }).catch(() => {});
+            throw new Error('Razorpay payment gateway failed to load. Please check your internet connection.');
+        }
 
         await new Promise((resolve, reject) => {
             const options = {

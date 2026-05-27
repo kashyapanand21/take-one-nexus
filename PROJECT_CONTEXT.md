@@ -125,4 +125,4 @@ As the platform grows, we plan to decouple the monolithic architecture:
 
 ## 🤝 Join the Production
 
-We are constantly improving. If you are participating in **SSOC** or **GSSoC**, this document is your foundation. Check out the [ARCHITECTURE.md](ARCHITECTURE.md) for deep technical details and [CONTRIBUTING.md](CONTRIBUTING.md) to start pushing code!
+We are constantly improving. If you are participating in **GSSoC 2026**, this document is your foundation. Check out the [ARCHITECTURE.md](ARCHITECTURE.md) for deep technical details and [CONTRIBUTING.md](CONTRIBUTING.md) to start pushing code!

@@ -2,7 +2,7 @@
 
 First off, thank you for considering contributing to TAKE ONE Nexus! It's people like you that make this ecosystem such a great tool for filmmakers and creators.
 
-Whether you're participating in **SSOC**, **GSSoC**, or just dropping by, we welcome contributions of all kinds: bug fixes, feature additions, documentation improvements, and design tweaks.
+Whether you're participating in **GSSoC 2026**, or just dropping by, we welcome contributions of all kinds: bug fixes, feature additions, documentation improvements, and design tweaks.
 
 ---
 

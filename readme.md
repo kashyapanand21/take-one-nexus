@@ -19,7 +19,6 @@
   </p>
 
   <p>
-    <img alt="SSOC" src="https://img.shields.io/badge/SSOC-2026-blueviolet" />
     <img alt="GSSoC" src="https://img.shields.io/badge/GSSoC-2026-orange" />
   </p>
 </div>
@@ -213,7 +212,7 @@ TAKE ONE Nexus is optimized for deployment on **Vercel**.
 
 ## 🤝 Open Source Contribution Guide
 
-We actively welcome contributions from the community, especially participants of **SSOC** and **GSSoC**!
+We actively welcome contributions from the community, especially participants of **GSSoC 2026**!
 
 ### Contributor Workflow
 
@@ -258,7 +257,7 @@ If you find a bug, please report it using the in-app Global Issue Reporter or vi
 ## 👥 Maintainers & Credits
 
 Production of **ALOK R** & the **TAKE ONE** Team.
-A special thanks to all open-source contributors and the SSOC/GSSoC communities.
+A special thanks to all open-source contributors and the GSSoC 2026 community.
 
 ---
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import prisma from '@/lib/prisma';
+import { awardCreditTask } from '@/lib/credits';
 import {
   generateSecureToken,
   hashToken,
@@ -66,6 +67,13 @@ export async function GET(request: NextRequest) {
         verification_token_expires: null,
       },
     });
+
+    // Award verification credits
+    try {
+      await awardCreditTask(user.id, 'EMAIL_VERIFICATION');
+    } catch (err) {
+      console.error('Failed to award verification credits:', err);
+    }
 
     return NextResponse.redirect(new URL('/verify-email?status=success', request.url));
   } catch (error) {
