@@ -1,0 +1,29 @@
+name: Mark stale issues and PRs
+
+on:
+  schedule:
+    - cron: '0 1 * * *'
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+
+    permissions:
+      issues: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/stale@v9
+        with:
+          days-before-stale: 7
+          days-before-close: -1
+
+          stale-issue-label: 'stale'
+
+          exempt-issue-labels: 'pinned,security'
+
+          stale-issue-message: >
+            This issue has been marked as inactive due to no activity for 7 days.
+            The assigned contributor may be unassigned to keep issues available for active contributors during GSSoC.
+
+          remove-issue-stale-when-updated: true

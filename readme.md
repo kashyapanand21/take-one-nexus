@@ -156,6 +156,16 @@ npx prisma generate
 npx prisma db push
 ```
 
+Alternatively, you can initialize and seed the raw database tables and test accounts (password for all: `password123`) using our dedicated scripts:
+
+```bash
+# Create database schema tables
+npm run db:init
+
+# Seed the database with creative profiles and sample scripts
+npm run db:seed
+```
+
 ### 5. Start Local Development
 
 Because of the hybrid architecture, run the Next.js dev server (which proxies API requests to Express):

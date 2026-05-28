@@ -72,10 +72,10 @@ function getCookieOptions() {
   return {
     httpOnly: true,
     secure: isProd,
-    sameSite: 'lax',
+    sameSite: isProd ? 'None' : 'Lax',
     path: '/',
     maxAge: 10 * 24 * 60 * 60 * 1000, // 10 days
-    ...(isProd && { domain: '.takeone-nexus.net.in' })
+    domain: isProd ? '.takeone-nexus.net.in' : undefined
   };
 }
 
@@ -133,9 +133,14 @@ const registerValidation = [
 ];
 
 router.post('/register', registerLimiter, registerValidation, async (req, res) => {
+  const isProd = process.env.NODE_ENV === 'production';
   try {
     const { name, email: normalizedEmail, password, role, college, city, gender, screen_name, display_preference } = req.body;
     
+    if (!isProd) {
+      console.log(`[AUTH_DEBUG] Registration attempt for email: ${normalizedEmail}`);
+    }
+
     // Check for existing user
     let existingUsers;
     try {
@@ -149,6 +154,9 @@ router.post('/register', registerLimiter, registerValidation, async (req, res) =
     }
 
     if (existingUsers && existingUsers.length > 0) {
+      if (!isProd) {
+        console.log(`[AUTH_DEBUG] ❌ Registration failed: Email already registered: ${normalizedEmail}`);
+      }
       return res.status(409).json({
         success: false,
         message: 'This email is already registered. Please try logging in.'
@@ -184,7 +192,17 @@ router.post('/register', registerLimiter, registerValidation, async (req, res) =
     };
 
     const token = createToken(user);
-    res.cookie('token', token, getCookieOptions());
+    const cookieOpts = getCookieOptions();
+    
+    if (!isProd) {
+      console.log(`[AUTH_DEBUG] ✅ Registration success: Created user ${user.email} (ID: ${user.id})`);
+      console.log(`[AUTH_DEBUG] Cookie options:`, {
+        ...cookieOpts,
+        value: '[REDACTED]'
+      });
+    }
+
+    res.cookie('token', token, cookieOpts);
 
     res.status(201).json({
       success: true,
@@ -294,8 +312,12 @@ const loginValidation = [
 
 router.post('/login', loginLimiter, loginValidation, async (req, res) => {
   const { email: normalizedEmail, password } = req.body;
+  const isProd = process.env.NODE_ENV === 'production';
   
   try {
+    if (!isProd) {
+      console.log(`[AUTH_DEBUG] Login attempt for email: ${normalizedEmail}`);
+    }
 
     let rows;
     try {
@@ -312,6 +334,9 @@ router.post('/login', loginLimiter, loginValidation, async (req, res) => {
     }
 
     if (!rows || rows.length === 0) {
+      if (!isProd) {
+        console.log(`[AUTH_DEBUG] ❌ Login failed: User not found for email: ${normalizedEmail}`);
+      }
       return res.status(401).json({
         success: false,
         message: 'Invalid email or password'
@@ -322,6 +347,9 @@ router.post('/login', loginLimiter, loginValidation, async (req, res) => {
     const passwordMatch = await bcrypt.compare(password, user.password);
 
     if (!passwordMatch) {
+      if (!isProd) {
+        console.log(`[AUTH_DEBUG] ❌ Login failed: Password mismatch for email: ${normalizedEmail}`);
+      }
       return res.status(401).json({
         success: false,
         message: 'Invalid email or password'
@@ -329,7 +357,17 @@ router.post('/login', loginLimiter, loginValidation, async (req, res) => {
     }
 
     const token = createToken(user);
-    res.cookie('token', token, getCookieOptions());
+    const cookieOpts = getCookieOptions();
+    
+    if (!isProd) {
+      console.log(`[AUTH_DEBUG] ✅ Login success: Generated session token for user: ${user.email} (ID: ${user.id})`);
+      console.log(`[AUTH_DEBUG] Cookie options:`, {
+        ...cookieOpts,
+        value: '[REDACTED]'
+      });
+    }
+
+    res.cookie('token', token, cookieOpts);
 
     res.json({
       success: true,
@@ -379,12 +417,17 @@ router.post('/login', loginLimiter, loginValidation, async (req, res) => {
 
 router.post('/logout', (req, res) => {
   const isProd = process.env.NODE_ENV === 'production';
+  
+  if (!isProd) {
+    console.log(`[AUTH_DEBUG] Logout request received. Clearing auth token cookie.`);
+  }
+
   res.clearCookie('token', {
     httpOnly: true,
     secure: isProd,
-    sameSite: 'lax',
+    sameSite: isProd ? 'None' : 'Lax',
     path: '/',
-    ...(isProd && { domain: '.takeone-nexus.net.in' })
+    domain: isProd ? '.takeone-nexus.net.in' : undefined
   });
   res.json({
     success: true,

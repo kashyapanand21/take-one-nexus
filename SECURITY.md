@@ -36,8 +36,8 @@ We implement a stateless **Double-Submit Cookie Pattern** globally on all state-
 
 ### 2. Authentication & Subdomain Session Sharing
 - Session validation uses JSON Web Tokens (JWT) signed with a robust key (`JWT_SECRET`).
-- Authentication cookies are configured with `httpOnly: true`, `secure: true`, and `sameSite: 'lax'`.
-- **Subdomain Sharing**: In production, the session cookie is configured with `domain: '.takeone-nexus.net.in'`. This allows a user logged in on the apex domain to access elevated panels on the admin subdomain (`admin.takeone-nexus.net.in`) seamlessly without re-authenticating.
+- Authentication cookies are configured with `httpOnly: true`, `secure: true` (in production), and `sameSite` set conditionally (`None` in production for cross-subdomain sharing; `Lax` in development for localhost support).
+- **Subdomain Sharing**: In production, the session cookie is configured with `domain: '.takeone-nexus.net.in'`. This allows a user logged in on the apex domain to access elevated panels on the admin subdomain (`admin.takeone-nexus.net.in`) seamlessly without re-authenticating. Locally, the domain attribute is omitted to support port-based testing on localhost.
 - `secondary_role` permissions (such as `admin` and `moderator`) are packed directly into the JWT payload during login, resolving route redirect loops.
 
 ### 3. Granular Rate Limiting

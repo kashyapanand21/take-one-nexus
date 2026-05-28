@@ -1,5 +1,28 @@
 require('dotenv').config();
 
+// 0. Validate critical environment variables in non-production environments
+const isProd = process.env.NODE_ENV === 'production';
+if (!isProd) {
+  const hasDB = process.env.DATABASE_URL || process.env.DB_HOST;
+  const missing = [];
+  if (!process.env.JWT_SECRET) missing.push('JWT_SECRET');
+  if (!hasDB) missing.push('DATABASE_URL (or DB_HOST)');
+  
+  if (missing.length > 0) {
+    console.error('\n==================================================');
+    console.error('❌ CRITICAL CONFIGURATION ERROR: MISSING ENVIRONMENT VARIABLES');
+    console.error('The following required local environment variables are missing:');
+    missing.forEach(key => {
+      console.error(`  - ${key}`);
+    });
+    console.error('\nPlease check your .env or .env.local file.');
+    console.error('To configure local development properly:');
+    console.error('1. Copy .env.example to .env');
+    console.error('2. Set values for JWT_SECRET and DATABASE_URL');
+    console.error('==================================================\n');
+  }
+}
+
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
@@ -40,13 +63,13 @@ const cspConfig = {
     styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdn.jsdelivr.net"],
     imgSrc: ["'self'", "blob:", "data:", "https://api.dicebear.com", "https://ui-avatars.com", "https://us.i.posthog.com", "https://eu.i.posthog.com"],
     fontSrc: ["'self'", "https://fonts.gstatic.com", "https://cdn.jsdelivr.net"],
-    connectSrc: ["'self'", "https://us.i.posthog.com", "https://eu.i.posthog.com", "https://app.posthog.com", "https://sentry.io", "https://*.sentry.io", "wss://*.pusher.com", "https://*.pusher.com", "https://*.pusherapp.com", "wss://*.pusherapp.com", "http://localhost:*", "ws://localhost:*", "https://takeone-nexus.net.in", "https://www.takeone-nexus.net.in", "https://admin.takeone-nexus.net.in", "https://scripts.takeone-nexus.net.in", "https://api.razorpay.com", "https://*.razorpay.com"],
+    connectSrc: ["'self'", "https://us.i.posthog.com", "https://eu.i.posthog.com", "https://app.posthog.com", "https://sentry.io", "https://*.sentry.io", "wss://*.pusher.com", "https://*.pusher.com", "https://*.pusherapp.com", "wss://*.pusherapp.com", "http://localhost:*", "ws://localhost:*", "http://127.0.0.1:*", "ws://127.0.0.1:*", "https://takeone-nexus.net.in", "https://www.takeone-nexus.net.in", "https://admin.takeone-nexus.net.in", "https://scripts.takeone-nexus.net.in", "https://api.razorpay.com", "https://*.razorpay.com"],
     frameSrc: ["'self'", "https://us.posthog.com", "https://eu.posthog.com", "https://app.posthog.com", "https://api.razorpay.com", "https://*.razorpay.com", "https://checkout.razorpay.com", "https://admin.takeone-nexus.net.in", "https://scripts.takeone-nexus.net.in"],
     workerSrc: ["'self'", "blob:"],
     objectSrc: ["'none'"],
     baseUri: ["'self'"],
     formAction: ["'self'"],
-    upgradeInsecureRequests: [],
+    ...(isProd && { upgradeInsecureRequests: [] }),
   },
 };
 
@@ -72,7 +95,7 @@ const allowedOrigins = [
   'https://scripts.takeone-nexus.net.in',  // Scripts moderation subdomain
 ];
 
-if (process.env.NODE_ENV !== 'production') {
+if (!isProd) {
   allowedOrigins.push(
     'http://localhost:3000',
     'http://127.0.0.1:3000',
@@ -88,7 +111,11 @@ if (process.env.NODE_ENV !== 'production') {
 app.use(cors({
   origin: (origin, callback) => {
     // Allow same-origin (no origin) or allowed origins
-    if (!origin || allowedOrigins.includes(origin) || (process.env.NODE_ENV !== 'production' && origin.startsWith('http://localhost'))) {
+    if (
+      !origin || 
+      allowedOrigins.includes(origin) || 
+      (!isProd && (origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1')))
+    ) {
       return callback(null, true);
     }
     

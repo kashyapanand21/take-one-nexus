@@ -52,7 +52,7 @@ We maintain a high standard for code quality to ensure scalability and maintaina
 
 ### 🛡️ Security Guidelines (Mandatory)
 - **CSRF Token Handling**: All state-changing API endpoints must check for CSRF token parity. If adding new POST/PUT/PATCH/DELETE endpoints, ensure they go through the `verifyCsrfToken` middleware in `server.js`.
-- **Session Cookie Security**: In production, auth cookies must enforce `domain: '.takeone-nexus.net.in'` to permit session validation on subdomains. Do not override this logic in `users.js`.
+- **Session Cookie Security**: In production, auth cookies enforce `domain: '.takeone-nexus.net.in'` and `sameSite: 'None'` to permit cross-subdomain session validation. In development, the cookie domain is omitted, and `sameSite: 'Lax'` is used to ensure compatibility with browsers on `localhost`. Maintain this conditional checks structure in both `users.js` and `csrf.js`.
 - **Database Interactivity**: Under no circumstances should you dynamically concatenate strings for SQL commands. All database interactions must use parameterized queries (via `?` placeholder inputs or Prisma).
 - **Payment Operations**: Razorpay Webhook handlers must use signature-verification on raw buffers before executing state transitions.
 - **Credit Ledgers**: Operations that modify user credits must be performed inside a database transaction block to ensure atomic safety.
@@ -94,3 +94,11 @@ We follow [Conventional Commits](https://www.conventionalcommits.org/):
 ```
 3. **Write a clear description**: Detail what the PR does, why it's needed, and how to test it. Link any relevant issues using `Closes #123`.
 4. **Pass Checks**: Ensure your PR passes all automated checks (linting, build process) before requesting a review.
+
+---
+
+## 📋 Issue Assignment Policy
+- Assigned contributors are expected to show progress regularly.
+- If there is no activity, update, draft PR, or communication for 7 days, the issue may be unassigned automatically.
+- This helps keep issues active and available for other contributors during GSSoC.
+- Contributors can request reassignment later if needed.

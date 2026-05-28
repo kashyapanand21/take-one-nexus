@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
  */
 function authenticateUser(req, res, next) {
   let token = null;
+  const isProd = process.env.NODE_ENV === 'production';
 
   // 1. Check Authorization Header
   const authHeader = req.headers.authorization || '';
@@ -18,6 +19,9 @@ function authenticateUser(req, res, next) {
   }
 
   if (!token) {
+    if (!isProd) {
+      console.log(`[AUTH_DEBUG] ❌ Access blocked: No auth token found in cookies or authorization headers.`);
+    }
     return res.status(401).json({
       success: false,
       message: 'Authentication required. Please login.'
@@ -31,8 +35,15 @@ function authenticateUser(req, res, next) {
     // Attach user to request
     req.user = decoded;
     
+    if (!isProd) {
+      console.log(`[AUTH_DEBUG] ✅ Token verified successfully for user: ${decoded.email} (ID: ${decoded.id}, Role: ${decoded.role})`);
+    }
+    
     // Explicitly check for expiration if not handled by verify
     if (decoded.exp && Date.now() >= decoded.exp * 1000) {
+      if (!isProd) {
+        console.log(`[AUTH_DEBUG] ❌ Token expired for user: ${decoded.email}`);
+      }
       return res.status(401).json({
         success: false,
         message: 'Session expired. Please login again.'
@@ -41,6 +52,9 @@ function authenticateUser(req, res, next) {
 
     return next();
   } catch (error) {
+    if (!isProd) {
+      console.error(`[AUTH_DEBUG] ❌ Token verification failed: ${error.message}`);
+    }
     console.error(`[AUTH_FAILURE] Token verification failed:`, error.message);
     
     if (error.name === 'TokenExpiredError') {

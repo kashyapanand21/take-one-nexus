@@ -10,13 +10,36 @@ const csrf = require('csurf');
 
 const isProd = process.env.NODE_ENV === 'production';
 
-const csrfProtection = csrf({
+const rawCsrfProtection = csrf({
   cookie: {
     httpOnly: false,       // Must be readable by JS for double-submit pattern
     secure: isProd,        // HTTPS only in production
     sameSite: isProd ? 'None' : 'Lax', // None required for cross-subdomain; Lax safe for localhost
-    ...(isProd && { domain: '.takeone-nexus.net.in' })
+    domain: isProd ? '.takeone-nexus.net.in' : undefined
   }
 });
+
+const csrfProtection = (req, res, next) => {
+  if (!isProd) {
+    console.log(`[CSRF_DEBUG] Incoming Request: ${req.method} ${req.originalUrl}`);
+    console.log(`[CSRF_DEBUG] CSRF Cookie Present: ${Boolean(req.cookies?.['_csrf'] || req.cookies?.['csrf'])}`);
+    console.log(`[CSRF_DEBUG] CSRF Header (X-CSRF-Token) Present: ${Boolean(req.headers['x-csrf-token'])}`);
+  }
+  
+  rawCsrfProtection(req, res, (err) => {
+    if (err) {
+      if (!isProd) {
+        console.error(`[CSRF_DEBUG] ❌ CSRF Validation Failed for ${req.method} ${req.originalUrl}`);
+        console.error(`[CSRF_DEBUG] Error details: ${err.message}`);
+      }
+      return next(err);
+    }
+    
+    if (!isProd) {
+      console.log(`[CSRF_DEBUG] ✅ CSRF Validation Passed for ${req.method} ${req.originalUrl}`);
+    }
+    next();
+  });
+};
 
 module.exports = csrfProtection;
