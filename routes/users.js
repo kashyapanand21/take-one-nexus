@@ -64,18 +64,24 @@ function createToken(user) {
 
 /**
  * Build cookie options for the auth token.
- * In production, domain is set to the apex domain so the cookie is shared
- * across takeone-nexus.net.in AND admin.takeone-nexus.net.in.
+ * In production on the custom domain, `domain` is set to the apex domain so
+ * the cookie is shared across takeone-nexus.net.in AND admin.takeone-nexus.net.in.
+ * On Vercel preview deployments, `domain` is left undefined so the browser
+ * scopes the cookie to the active Vercel subdomain automatically.
  */
 function getCookieOptions() {
   const isProd = process.env.NODE_ENV === 'production';
+  const isVercelPreview = Boolean(process.env.VERCEL_URL?.includes('vercel.app'));
   return {
     httpOnly: true,
     secure: isProd,
     sameSite: isProd ? 'None' : 'Lax',
     path: '/',
     maxAge: 10 * 24 * 60 * 60 * 1000, // 10 days
-    domain: isProd ? '.takeone-nexus.net.in' : undefined
+    // Only pin the domain on the custom production domain.
+    // On Vercel previews, leave domain undefined so the browser uses the
+    // current host automatically (e.g. take-one-nexus.vercel.app).
+    domain: isProd && !isVercelPreview ? '.takeone-nexus.net.in' : undefined
   };
 }
 
@@ -427,7 +433,7 @@ router.post('/logout', (req, res) => {
     secure: isProd,
     sameSite: isProd ? 'None' : 'Lax',
     path: '/',
-    domain: isProd ? '.takeone-nexus.net.in' : undefined
+    domain: isProd && !Boolean(process.env.VERCEL_URL?.includes('vercel.app')) ? '.takeone-nexus.net.in' : undefined
   });
   res.json({
     success: true,

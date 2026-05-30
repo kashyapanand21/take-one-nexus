@@ -1,21 +1,31 @@
 /**
  * CSRF Protection middleware using csurf
- * 
+ *
  * sameSite: "None" + secure: true is required for cross-subdomain cookie sharing.
  * With sameSite: "Lax", the browser will NOT send the CSRF cookie when
  * navigating from admin.takeone-nexus.net.in → takeone-nexus.net.in or vice-versa.
+ *
+ * On Vercel preview deployments (VERCEL_URL contains "vercel.app"), the domain
+ * is intentionally left undefined so the browser scopes the cookie to the
+ * active Vercel subdomain, preventing the cookie-domain mismatch that causes
+ * "Invalid CSRF Token" errors on preview URLs.
  */
 
 const csrf = require('csurf');
 
 const isProd = process.env.NODE_ENV === 'production';
+// Detect Vercel preview deployments (VERCEL_URL is set by Vercel for every deployment)
+const isVercelPreview = Boolean(process.env.VERCEL_URL?.includes('vercel.app'));
 
 const rawCsrfProtection = csrf({
   cookie: {
     httpOnly: false,       // Must be readable by JS for double-submit pattern
     secure: isProd,        // HTTPS only in production
     sameSite: isProd ? 'None' : 'Lax', // None required for cross-subdomain; Lax safe for localhost
-    domain: isProd ? '.takeone-nexus.net.in' : undefined
+    // Only pin the domain on the custom production domain.
+    // On Vercel previews, leave domain undefined so the browser uses the
+    // current host automatically (e.g. take-one-nexus.vercel.app).
+    domain: isProd && !isVercelPreview ? '.takeone-nexus.net.in' : undefined
   }
 });
 
