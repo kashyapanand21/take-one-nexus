@@ -1648,7 +1648,14 @@ registerForm?.addEventListener('submit', async (e) => {
     showToast('❌ Password must be at least 6 characters');
     return;
   }
-  const submitBtn = registerForm.querySelector('.form-submit');
+  // The final step's submit button uses .wizard-btn-next[type="submit"], not .form-submit
+  const submitBtn = registerForm.querySelector('.wizard-btn-next[type="submit"]') ||
+                    registerForm.querySelector('[type="submit"]');
+  if (!submitBtn) {
+    console.error('[Register] Submit button not found in registerForm');
+    showToast('❌ Form error — please refresh the page');
+    return;
+  }
   const originalText = submitBtn.textContent;
   
   // Clear previous errors
@@ -1688,12 +1695,15 @@ registerForm?.addEventListener('submit', async (e) => {
   try {
     submitBtn.disabled = true;
     submitBtn.textContent = 'Generating Crew Card...';
-    
+
     const screen_name = document.getElementById('registerScreenName')?.value || '';
     const display_preference = document.getElementById('registerDisplayPreference')?.value || 'Show Real Name Only';
-    
+
     const payload = { name, email, password, role, gender, college, city, screen_name, display_preference };
+    console.log('[Register] Submitting registration payload:', { ...payload, password: '[REDACTED]' });
+
     const response = await API.users.register(payload);
+    console.log('[Register] API response:', response);
     
     if (response.success) {
       API.auth.saveToken(response.token, response.user);
