@@ -5,7 +5,6 @@ import {
   generateSecureToken,
   hashToken,
   getResetExpiry,
-  isExpired,
 } from '@/lib/email-tokens';
 import { buildResetPasswordTemplate } from '@/lib/email-templates/reset-password';
 import { checkRateLimit, getClientIP, buildRateLimitKey } from '@/lib/rate-limiter';
