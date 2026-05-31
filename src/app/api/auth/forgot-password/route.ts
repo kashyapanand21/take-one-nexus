@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
     } else {
       try {
         const result = await resend.emails.send({
-          from: 'onboarding@resend.dev',
+          from: 'TAKE ONE NEXUS <onboarding@takeone-nexus.net.in>',
           to: user.email,
           subject: '🔐 Reset your TAKE ONE password',
           html: buildResetPasswordTemplate({

@@ -199,7 +199,7 @@ router.post('/forgot-password', forgotPasswordLimiter, async (req, res) => {
         console.log('[Forgot Password] Sending reset email to:', user.email);
         console.log('[Forgot Password] Reset URL:', resetUrl);
         const result = await resend.emails.send({
-          from: 'onboarding@resend.dev',
+          from: 'TAKE ONE NEXUS <onboarding@takeone-nexus.net.in>',
           to: user.email,
           subject: '🔐 Reset your TAKE ONE password',
           html: buildResetPasswordTemplate({
